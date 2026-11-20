@@ -401,22 +401,32 @@
       const uniqueQueries = [...new Set((queries || []).filter(Boolean).map(q => String(q).trim()).filter(Boolean))];
       if (!uniqueQueries.length) return { success: true, results: [], total: 0, async: false };
 
-      const initialResponse = await fetch('/api/refresh-quotes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queries: uniqueQueries, forceRefresh: options.forceRefresh === true }),
-        signal: options.signal
-      });
+      let initialResponse;
+      try {
+        initialResponse = await fetch(getApiEndpoint('/api/refresh-quotes'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ queries: uniqueQueries, forceRefresh: options.forceRefresh === true }),
+          signal: options.signal
+        });
+      } catch (netErr) {
+        throw new Error('No se pudo conectar con el servidor de scraping (Puppeteer). Comprueba que esté en ejecución o configura la URL en Ajustes de Backend.');
+      }
       let data;
       try { data = await initialResponse.json(); }
-      catch (_) { throw new Error(`Respuesta no válida del servidor (HTTP ${initialResponse.status}).`); }
+      catch (_) {
+        if (initialResponse.status === 404) {
+          throw new Error('Servidor de scraping no encontrado (404). Si estás en GitHub Pages, conecta la URL de tu backend en el icono de la barra superior.');
+        }
+        throw new Error(`Respuesta no válida del servidor (HTTP ${initialResponse.status}).`);
+      }
       if (!initialResponse.ok) throw new Error(data?.error || `HTTP ${initialResponse.status}`);
 
       const asyncJobId = data?.async && data.jobId ? data.jobId : null;
       while (data?.async && data.jobId && (data.status === 'queued' || data.status === 'running')) {
         options.onProgress?.(data);
         await quoteRefreshDelay(options.pollIntervalMs || 900);
-        const pollResponse = await fetch(`/api/refresh-quotes/jobs/${encodeURIComponent(data.jobId)}`, {
+        const pollResponse = await fetch(getApiEndpoint(`/api/refresh-quotes/jobs/${encodeURIComponent(data.jobId)}`), {
           method: 'GET',
           cache: 'no-store',
           signal: options.signal
@@ -430,7 +440,7 @@
       // Tras analizar el cuerpo, confirma recepción para que el servidor libere
       // pronto los resultados en memoria. La variable `data` ya conserva el array.
       if (asyncJobId) {
-        fetch(`/api/refresh-quotes/jobs/${encodeURIComponent(asyncJobId)}/ack`, {
+        fetch(getApiEndpoint(`/api/refresh-quotes/jobs/${encodeURIComponent(asyncJobId)}/ack`), {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}', keepalive: true
         }).catch(() => {});
       }
@@ -484,7 +494,7 @@
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>'; }
 
       try {
-        const res = await fetch('/api/scrape-fund', {
+        const res = await fetch(getApiEndpoint('/api/scrape-fund'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: val })

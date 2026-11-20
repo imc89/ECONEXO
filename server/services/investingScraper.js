@@ -144,9 +144,16 @@ async function waitForHistoricalTable(page, timeout = 7000) {
 }
 
 
-// Locate Chrome executable on macOS or let puppeteer use bundled
+// Locate Chrome/Chromium executable across macOS, Linux, and Docker environments
 function getChromeExecutable() {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
+    return process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
   const commonPaths = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser'
   ];

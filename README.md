@@ -100,6 +100,25 @@ ECONEXO/
 
 ---
 
+## ☁️ Despliegue del Backend de Puppeteer en la Nube (Render / Railway / Docker)
+
+Como **GitHub Pages solo aloja archivos estáticos**, las funciones de scraping en vivo (Puppeteer / Investing.com) requieren un backend Node.js en ejecución.
+
+El repositorio ya incluye los archivos necesarios para desplegarlo en 1 clic:
+- `Dockerfile`: Imagen con Node.js 20, Chromium y dependencias de sistema preinstaladas.
+- `render.yaml`: Blueprint listo para desplegar un Web Service gratuito en [Render.com](https://render.com).
+
+### Pasos para conectar GitHub Pages con tu Backend en la Nube:
+1. Sube o conecta este repositorio en **Render.com** (o **Railway** / cualquier VPS con Docker).
+2. Render detectará el `Dockerfile` y levantará el servicio backend con Puppeteer activo.
+3. Copia la URL de tu servicio en Render (ej. `https://tu-backend.onrender.com`).
+4. Abre tu app en GitHub Pages (`https://imc89.github.io/ECONEXO/`), pulsa el icono de **Conexión Backend** en la barra superior y pega tu URL.
+5. ¡Listo! Tu versión de GitHub Pages actualizará cotizaciones y gráficas en vivo con Puppeteer sin depender de tu ordenador.
+
+*(Nota: si ejecutas ECONEXO en local con `npm start`, no necesitas configurar nada; el frontend detecta el backend automáticamente).*
+
+---
+
 ## 📱 Acceso Directo / App Móvil (PWA)
 
 ECONEXO está preparado para instalarse como una aplicación nativa o acceso directo en tu dispositivo móvil:

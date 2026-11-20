@@ -48,6 +48,21 @@
     }
 
     /**
+     * Resuelve la URL completa para llamadas a endpoints de la API (/api/...).
+     * Permite conectar un backend remoto (Render, Railway o localhost) cuando
+     * la aplicación se ejecuta en entornos estáticos como GitHub Pages.
+     */
+    function getApiEndpoint(endpoint) {
+      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      let custom = '';
+      try { custom = (localStorage.getItem('econexo_api_url') || '').trim(); } catch (_) {}
+      if (custom) {
+        return `${custom.replace(/\/+$/, '')}${cleanEndpoint}`;
+      }
+      return cleanEndpoint;
+    }
+
+    /**
      * Normaliza una fecha a DD/MM/YYYY con día y mes siempre de dos dígitos.
      * Acepta separadores / - . y soporta D/M/YYYY → DD/MM/YYYY.
      * Devuelve la cadena original si no reconoce el patrón.

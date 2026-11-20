@@ -90,7 +90,7 @@
       if (icon) icon.classList.add('animate-spin');
       if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.setAttribute('aria-busy', 'true'); }
       try {
-        const res = await fetch('/api/scrape-fund', {
+        const res = await fetch(getApiEndpoint('/api/scrape-fund'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: quote.url || quote.isin, range: requestedRange })
