@@ -103,7 +103,7 @@ function createMainWindow() {
       contextIsolation: true,
       sandbox: true,
     },
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    titleBarStyle: 'default',
   });
 
   // Manejo de errores de carga con reintento automático
