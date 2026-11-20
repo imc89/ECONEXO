@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<!-- ECONEXO: versión documentada. Los comentarios describen módulos y contratos internos; los estilos y la estructura visual se conservan. -->
+<html lang="es" class="h-full">
+
+<head>
+  <!-- dark-mode bootstrap -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('theme');
+        var dark = saved !== 'light';
+        if (dark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.colorScheme = 'light';
+        }
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+      }
+    })();
+  </script>
+
+  <!-- El splash de arranque se muestra siempre. La decisión de actualizar o no
+     se toma después de comprobar una pequeña muestra real de fondos. -->
+
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-store, max-age=0, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ECONEXO</title>
+  <meta name="econexo-build" content="2.2.0">
+  <script>window.ECONEXO_BUILD_VERSION = "2.2.0";</script>
+  <meta name="description"
+    content="Dashboard financiero integral: Tablas bancarias dinámicas con y sin interés, Fondos Indexados con desglose claro de ganancias y Ahorro.">
+  <link rel="icon" type="image/png" href="./img/app_favicon/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="./img/app_favicon/favicon.svg" />
+  <!-- Iconos para acceso directo / pantalla de inicio (iOS y Android) -->
+  <link rel="apple-touch-icon" href="./img/app_favicon/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./img/app_favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ECONEXO">
+  <meta name="theme-color" content="#0b0f19">
+  <!-- Estilos propios compartidos por toda la aplicación. -->
+  <link rel="stylesheet" href="./css/skeuomorphism.css?v=2.2.1">
+  <!-- Tailwind CSS -->
+  <!-- Utilidades CSS y configuración del tema de Tailwind. -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0f7ff', 100: '#e0effe', 500: '#2563eb', 600: '#1d4ed8', 700: '#1e40af' },
+            slate: { 850: '#111827', 950: '#0b0f19' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js & Phosphor Icons -->
+  <!-- Dependencias externas: Chart.js para gráficas y Phosphor para iconografía. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <link rel="stylesheet" href="./css/app.css?v=2.2.1">
+</head>
+
+<body class="min-h-full flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+  <!-- STARTUP SPLASH: visible until the initial Puppeteer refresh completes -->
+  <div id="appStartupSplash" role="status" aria-live="polite" aria-label="Actualizando fondos">
+    <div class="startup-panel">
+      <div class="startup-logo-frame" aria-label="Logo ECONEXO">
+        <img src="./img/logo.png" alt="Logo" class="startup-logo object-cover self-center">
+      </div>
+
+      <div class="startup-loader" aria-hidden="true">
+        <div id="appStartupSpinner" class="startup-loader-ring"></div>
+        <div class="startup-loader-sheen"></div>
+        <div class="startup-loader-orbit"></div>
+        <div class="startup-loader-core">
+          <div id="appStartupPercent">0%</div>
+          <div class="startup-percent-label">completado</div>
+        </div>
+      </div>
+
+      <p id="appStartupTitle" class="startup-title">Actualizando fondos</p>
+      <p id="appStartupMessage" class="startup-message">Consultando precios actualizados mediante Puppeteer…</p>
+      <p id="appStartupFund">Preparando actualización…</p>
+
+      <div class="startup-progress-track" aria-hidden="true">
+        <div id="appStartupProgressBar"></div>
+      </div>
+      <div id="appStartupCount">Preparando fondos…</div>
+      <div id="appStartupActivity"><span id="appStartupActivityDot"></span><span id="appStartupActivityText">Preparando
+          conexiones seguras</span></div>
+      <div class="startup-runtime"><span>Tiempo <strong id="appStartupElapsed">0,0
+            s</strong></span><span>•</span><span>Activos <strong id="appStartupActive">0</strong></span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+     TOP NAVBAR
+     ══════════════════════════════════════════════════════════════════════════ -->
+  <header
+    class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="max-w-[1880px] mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-3">
+      <!-- Brand / Title -->
+      <div class="flex items-center gap-3 min-w-0 h-12">
+        <!-- Forzamos la alineación en cada imagen con self-center -->
+        <img src="./img/logo.png" alt="Logo" class="w-9 h-9 object-cover shadow-md flex-shrink-0 self-center">
+        <img src="./img/name.png" alt="Logo" class="h-9 w-auto object-contain flex-shrink-0 self-center"
+          style="margin-top: 4px;">
+      </div>
+      <!-- Action Toolbar -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Monthly JSON Backup History -->
+        <div class="relative">
+          <button id="btnBackupHistory"
+            class="inline-flex items-center justify-center p-2 rounded-lg text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            title="Historial de backups JSON" aria-label="Historial de backups JSON" aria-expanded="false"
+            aria-controls="backupHistoryMenu">
+            <i class="ph ph-clock-counter-clockwise text-base"></i>
+          </button>
+          <div id="backupHistoryMenu"
+            class="hidden absolute right-0 top-full mt-2 z-[80] w-[min(390px,calc(100vw-24px))] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden">
+            <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Historial
+                    de backups</h3>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Una copia automática por mes</p>
+                </div>
+                <i class="ph ph-archive text-indigo-500 text-lg"></i>
+              </div>
+            </div>
+            <div class="p-3 space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <label class="block">
+                  <span class="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">Desde</span>
+                  <input id="backupHistoryFrom" type="date"
+                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500">
+                </label>
+                <label class="block">
+                  <span class="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">Hasta</span>
+                  <input id="backupHistoryTo" type="date"
+                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-200 focus:outline-none focus:border-indigo-500">
+                </label>
+              </div>
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <span id="backupHistoryCount" class="text-[10px] text-slate-400">0 backups</span>
+                <div class="flex items-center gap-3">
+                  <button id="btnBackupHistoryClearFilters" type="button"
+                    class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">Mostrar
+                    todos</button>
+                  <button id="btnDeleteAllBackups" type="button" disabled title="Borrar todo el historial"
+                    class="text-[10px] font-semibold text-rose-600 dark:text-rose-400 hover:underline disabled:opacity-40 disabled:cursor-not-allowed">Vaciar
+                    histórico</button>
+                </div>
+              </div>
+              <div id="backupHistoryList"
+                class="max-h-64 overflow-y-auto space-y-1.5 rounded-xl bg-slate-50/80 dark:bg-slate-950/40 p-1.5">
+                <div class="py-6 text-center text-[10px] text-slate-400">Todavía no hay backups históricos.</div>
+              </div>
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button id="btnExportSelectedBackup" type="button" disabled
+                  class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:dark:bg-slate-700 disabled:cursor-not-allowed text-white text-xs font-semibold transition">
+                  <i class="ph-bold ph-download-simple text-xs"></i><span>Exportar JSON seleccionado</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export / Import Workspace -->
+        <div class="hidden sm:flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-2">
+          <div id="exportBackupDropdown" class="relative">
+            <button id="btnExportWS" type="button" aria-label="Opciones de exportación de backup"
+              aria-haspopup="menu" aria-expanded="false" aria-controls="exportBackupMenu"
+              class="p-2 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              title="Exportar copia de seguridad: elegir sin cifrar o cifrada">
+              <i class="ph ph-download-simple text-base" aria-hidden="true"></i>
+            </button>
+            <div id="exportBackupMenu" role="menu" aria-labelledby="btnExportWS" aria-hidden="true" hidden
+              class="absolute right-0 top-full mt-2 z-[90] w-72 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl p-1.5">
+              <button id="btnExportWSPlain" type="button" role="menuitem"
+                class="w-full flex items-start gap-3 text-left p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <i class="ph ph-file-text text-lg text-indigo-600 dark:text-indigo-400 mt-0.5" aria-hidden="true"></i>
+                <span class="min-w-0"><strong class="block text-xs text-slate-800 dark:text-slate-100">Exportar sin cifrar</strong><small class="block mt-1 text-[10px] leading-relaxed text-slate-500">Archivo JSON normal, sin contraseña. Su contenido puede leerse.</small></span>
+              </button>
+              <button id="btnExportEncryptedMenuItem" type="button" role="menuitem"
+                class="w-full flex items-start gap-3 text-left p-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition">
+                <i class="ph ph-shield-check text-lg text-indigo-600 dark:text-indigo-400 mt-0.5" aria-hidden="true"></i>
+                <span class="min-w-0"><strong class="block text-xs text-slate-800 dark:text-slate-100">Exportar cifrada</strong><small class="block mt-1 text-[10px] leading-relaxed text-slate-500">Copia protegida por contraseña AES-256-GCM.</small></span>
+              </button>
+            </div>
+          </div>
+          <button id="btnImportWS" aria-label="Importar copia de seguridad JSON"
+            class="p-2 rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            title="Importar backup normal o cifrado">
+            <i class="ph ph-upload-simple text-base"></i>
+          </button>
+          <input type="file" id="wsFileInput" accept=".json,.econexo" class="hidden">
+        </div>
+
+        <!-- Clear / Reset All Data -->
+        <button id="btnClearAll"
+          class="hidden sm:inline-flex items-center gap-1 h-[43.5px] px-3 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+          title="Vaciar todos los datos y empezar de cero">
+          <i class="ph ph-trash text-xs"></i><span>Limpiar Datos</span>
+        </button>
+
+        <!-- Dark Mode Toggle -->
+        <button id="btnTheme" aria-label="Cambiar tema claro u oscuro" title="Cambiar tema claro u oscuro"
+          class="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white hover:bg-slate-800 transition">
+          <i id="themeIcon" class="ph ph-moon text-base"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+     NAVIGATION TABS (STICKY) — ORDEN: BANCA -> FONDOS INDEXADOS -> AHORRO -> DASHBOARD
+     ══════════════════════════════════════════════════════════════════════════ -->
+  <div
+    class="sticky top-14 z-30 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-[1880px] mx-auto px-3 sm:px-6">
+      <nav class="flex items-center gap-1.5 overflow-x-auto py-2 no-scrollbar" id="sectionTabsNav" aria-label="Navegación principal">
+        <!-- 1. BANCA (PRIMERO) -->
+        <button
+          class="section-tab active flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+          data-section="banca">
+          <i class="ph-bold ph-bank text-sm text-purple-600"></i>
+          <span>BANCA</span>
+        </button>
+
+        <!-- 2. FONDOS INDEXADOS & MONITOR (SEGUNDO) -->
+        <button
+          class="section-tab flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+          data-section="fondos">
+          <i class="ph-bold ph-trend-up text-sm text-emerald-600"></i>
+          <span>FONDOS INDEXADOS & MONITOR</span>
+        </button>
+
+        <!-- 3. AHORRO (TERCERO) -->
+        <button
+          class="section-tab flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+          data-section="ahorro">
+          <i class="ph-bold ph-calendar-check text-sm text-amber-600"></i>
+          <span>AHORRO</span>
+        </button>
+
+        <!-- 4. DASHBOARD (ÚLTIMO) -->
+        <button
+          class="section-tab flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+          data-section="dashboard">
+          <i class="ph-bold ph-chart-pie-slice text-sm text-blue-600"></i>
+          <span>DASHBOARD</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+     MAIN CONTAINER
+     ══════════════════════════════════════════════════════════════════════════ -->
+  <main class="flex-1 max-w-[1880px] w-full mx-auto px-3 sm:px-6 py-6 space-y-6">
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+       1. BANCA (MULTITABLAS DINÁMICAS: BBVA, NORWEGIAN, CON/SIN % INTERÉS)
+       ════════════════════════════════════════════════════════════════════════ -->
+    <section id="page-banca" class="section-page active space-y-6">
+      <!-- Header -->
+      <div
+        class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md bg-gradient-to-tr from-purple-600 to-indigo-600">
+            <i class="ph-bold ph-bank text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">SECCIÓN DE
+              BANCA & ENTIDADES</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Crea tablas para cualquier banco (BBVA, Norwegian,
+              etc.) eligiendo si genera % de interés</p>
+          </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="openCreateBankTableModal()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-sm transition active:scale-95 bg-purple-600 hover:bg-purple-700">
+            <i class="ph-bold ph-plus text-xs"></i><span>Añadir Nueva Cuenta</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Banca KPIs Consolidado -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="stat-card border-l-4 border-l-purple-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total en Todos los Bancos</p>
+          <p id="statBancaTotalGlobal" class="text-2xl font-extrabold text-slate-900 dark:text-white font-mono-num">—
+          </p>
+          <span class="text-[11px] text-slate-400 mt-1 block">Suma de saldos actuales</span>
+        </div>
+        <div class="stat-card border-l-4 border-l-emerald-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ganancia del último periodo (cuentas remuneradas)</p>
+          <p id="statBancaTotalGanado"
+            class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono-num">—</p>
+          <span class="text-[11px] text-slate-400 mt-1 block">Suma de la última CANTIDAD GANADA de cada cuenta
+            remunerada</span>
+        </div>
+        <div class="stat-card border-l-4 border-l-indigo-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Entidades Registradas</p>
+          <p id="statBancaCount" class="text-2xl font-extrabold text-purple-600 dark:text-purple-400 font-mono-num">0
+          </p>
+          <span class="text-[11px] text-slate-400 mt-1 block">Tablas bancarias activas</span>
+        </div>
+        <div class="stat-card border-l-4 border-l-amber-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mejor Tipo de Interés</p>
+          <p id="statBancaBestInterest"
+            class="text-2xl font-extrabold font-mono-num text-purple-600 dark:text-purple-400">—</p>
+          <span class="text-[11px] text-slate-400 mt-1 block">Tasa de interés máxima activa</span>
+        </div>
+      </div>
+
+      <!-- ══ ORDEN RÁPIDO DE CUENTAS BANCARIAS ══ -->
+      <div id="bancaAccountTabs"
+        class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-sm">
+        <div class="flex items-center gap-2 px-2 pb-2">
+          <i class="ph-bold ph-sort-ascending text-purple-600 text-sm"></i>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Orden de
+            cuentas</span>
+          <span class="text-[10px] text-slate-400">Arrastra las pestañas para cambiar el orden de toda la sección</span>
+        </div>
+        <div id="bancaAccountTabsList" class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar"
+          aria-label="Orden de cuentas bancarias"></div>
+      </div>
+
+      <!-- ══ CONTENEDOR DE TABLAS BANCARIAS DINÁMICAS (BBVA, NORWEGIAN, ETC.) ══ -->
+      <div id="bancaTablesContainer" class="space-y-6">
+        <!-- Injected dynamically: Each bank table gets its own dedicated card and features -->
+      </div>
+
+      <!-- Empty State for Banca -->
+      <div id="bancaEmptyState" class="hidden chart-card text-center py-12 text-slate-400">
+        <div
+          class="w-12 h-12 mx-auto rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-500 flex items-center justify-center text-2xl mb-3">
+          <i class="ph ph-bank"></i>
+        </div>
+        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">No tienes cuentas bancarias configuradas</h3>
+        <p class="text-xs mt-1 mb-4 max-w-md mx-auto">Crea cuentas para BBVA, Norwegian o cualquier entidad, y elige si
+          la cuenta da % de interés o es estándar.</p>
+        <button onclick="openCreateBankTableModal()"
+          class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5">
+          <i class="ph-bold ph-plus text-xs"></i><span>Añadir Nueva Cuenta</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+       2. FONDOS INDEXADOS (CON MONITOR EN DIRECTO INTEGRADO & DESGLOSE CLARO DE GANANCIAS)
+       ════════════════════════════════════════════════════════════════════════ -->
+    <section id="page-fondos" class="section-page space-y-6">
+      <!-- Header -->
+      <div
+        class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md bg-gradient-to-tr from-emerald-600 to-teal-500">
+            <i class="ph-bold ph-trend-up text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">FONDOS
+              INDEXADOS & MONITOR DE MERCADO</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Cotizaciones consultadas en Investing.com · evolución y composición de cartera</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+        </div>
+      </div>
+
+      <!-- ══ MONITOR DE FONDOS EN VIVO (DISEÑO COMPLETO RESTAURADO) ══ -->
+      <div id="liveMonitorCard"
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+
+        <!-- Header: broadcast icon + title + input + refresh -->
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center space-x-3">
+            <div
+              class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 flex-shrink-0">
+              <i class="ph-bold ph-broadcast text-lg sm:text-xl"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">MONITOR DE FONDOS
+                </h3>
+                <span id="fundsLastUpdateBadge"
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                  title="Última actualización de las cotizaciones"><i class="ph ph-clock text-[10px] mr-1"></i><span
+                    id="fundsLastUpdateText">Sin actualizar</span></span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Precios vía Investing.com &middot; Arrastra las
+                tarjetas para reordenar</p>
+            </div>
+          </div>
+
+          <!-- Quick add form + Refresh all -->
+          <div class="flex items-center gap-2 text-xs w-full sm:w-auto">
+            <form id="quickAddForm" class="flex items-center space-x-1.5 flex-1 sm:flex-initial">
+              <div class="relative flex-1 sm:w-72">
+                <i class="ph ph-link absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="quickIsinInput" aria-label="ISIN o URL del fondo en Investing.com" placeholder="Pegar URL de Investing.com..."
+                  class="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-emerald-500 transition">
+              </div>
+              <button type="submit" id="quickAddIsinBtn"
+                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition flex items-center space-x-1 flex-shrink-0">
+                <i class="ph-bold ph-plus text-xs"></i>
+                <span>Añadir</span>
+              </button>
+            </form>
+            <div class="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-0.5 hidden sm:block"></div>
+            <button id="refreshAllQuotesBtn"
+              class="inline-flex items-center px-2.5 sm:px-3 py-1.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-200 font-medium transition flex-shrink-0"
+              title="Actualizar todas las cotizaciones">
+              <i id="refreshAllIcon" class="ph-bold ph-arrows-clockwise text-xs sm:mr-1.5"></i>
+              <span class="hidden sm:inline">Actualizar</span>
+            </button>
+            <button id="btnExportFondosCSV" type="button" class="hidden sm:inline-flex items-center px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-200 font-medium transition" title="Exportar fondos a CSV"><i class="ph-bold ph-file-csv text-xs mr-1"></i>CSV</button>
+            <button id="btnExportFondosXLSX" type="button" class="hidden sm:inline-flex items-center px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-200 font-medium transition" title="Exportar fondos a Excel"><i class="ph-bold ph-file-xls text-xs mr-1"></i>Excel</button>
+          </div>
+        </div>
+
+        <!-- Resumen de fondos seguidos; la variación media es simple y no ponderada por importe invertido. -->
+        <div id="portfolioSummaryBar" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3"></div>
+
+        <!-- View mode selector: card grid by default, optional list layout. -->
+        <div class="flex items-center justify-end gap-2 -mb-1">
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Vista</span>
+          <div id="liveQuotesViewModeToolbar" class="chart-mode-toolbar" role="group"
+            aria-label="Modo de vista del monitor de fondos">
+            <button type="button" id="liveQuotesCardsModeBtn" class="chart-mode-btn active"
+              title="Ver fondos en tarjetas" aria-label="Ver fondos en tarjetas" aria-pressed="true">
+              <i class="ph-bold ph-squares-four" style="font-size:13px" aria-hidden="true"></i>
+              <span>Tarjetas</span>
+            </button>
+            <button type="button" id="liveQuotesListModeBtn" class="chart-mode-btn" title="Ver fondos en listado"
+              aria-label="Ver fondos en listado" aria-pressed="false">
+              <i class="ph-bold ph-list-bullets" style="font-size:13px" aria-hidden="true"></i>
+              <span>Listado</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid of live quote cards (draggable) -->
+        <div id="liveQuotesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          <!-- Cards injected here by renderLiveQuotes() -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="emptyLiveQuotesState" class="text-center py-10 text-slate-400 dark:text-slate-500">
+          <i class="ph-bold ph-broadcast text-4xl mb-2 text-slate-300 dark:text-slate-700"></i>
+          <p class="text-sm font-semibold">Sin fondos en el monitor</p>
+          <p class="text-xs text-slate-400 mt-1">Pega el enlace de Investing.com del fondo que quieras seguir</p>
+        </div>
+      </div>
+
+      <!-- ══ INDICADORES GENERALES DE LA CARTERA DE FONDOS ══ -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <!-- 1. VALOR DE MERCADO -->
+        <div class="stat-card border-l-4 border-l-emerald-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">VALOR DE MERCADO</p>
+          <p id="statFondosTotalValue"
+            class="text-2xl font-extrabold text-slate-900 dark:text-white font-mono-num">—</p>
+          <span class="text-[11px] text-slate-400 mt-1 block">Patrimonio actual en fondos</span>
+        </div>
+        <!-- 2. BENEFICIO O PÉRDIDA TOTAL -->
+        <div class="stat-card border-l-4 border-l-emerald-500">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">BENEFICIO / PÉRDIDA</p>
+          <p id="statFondosTotalGain"
+            class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono-num">—</p>
+          <span id="statFondosTotalGainSub" class="text-[11px] text-slate-400 mt-1 block">Valor mercado − invertido</span>
+        </div>
+        <!-- 3. RENTABILIDAD TOTAL (%) -->
+        <div class="stat-card border-l-4 border-l-blue-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">RENTABILIDAD</p>
+          <p id="statFondosTotalRoi"
+            class="text-2xl font-extrabold font-mono-num text-emerald-600 dark:text-emerald-400">—</p>
+          <span id="statFondosRoiSub" class="text-[11px] text-slate-400 mt-1 block">Rentabilidad total ponderada</span>
+        </div>
+        <!-- 4. CAPITAL INVERTIDO -->
+        <div class="stat-card border-l-4 border-l-slate-500">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1" id="statFondosInvestedLabel">INVERTIDO</p>
+          <p id="statFondosTotalInvested" class="text-2xl font-extrabold text-slate-900 dark:text-white font-mono-num">—</p>
+          <span id="statFondosInvestedSub" class="text-[11px] text-slate-400 mt-1 block">Capital de adquisición en cartera</span>
+        </div>
+      </div>
+
+      <!-- ══ CÁLCULOS INDIVIDUALES POR FONDO ══ -->
+      <div id="portfolioReturnsPanel"
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-3.5 sm:p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white bg-gradient-to-tr from-emerald-600 to-teal-600 shadow-xs">
+              <i class="ph-bold ph-chart-line-up text-base"></i>
+            </div>
+            <div>
+              <h3 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                RENTABILIDAD INDIVIDUAL POR FONDO
+              </h3>
+              <p id="prMethod" class="text-[10px] text-slate-400">Rentabilidad ponderada por capital invertido de cada posición</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                <th class="py-2.5 px-3 text-left min-w-[220px]">FONDO</th>
+                <th class="py-2.5 px-3 text-left min-w-[120px]">ISIN</th>
+                <th class="py-2.5 px-3 text-right min-w-[120px]">VALOR DE MERCADO</th>
+                <th class="py-2.5 px-3 text-right min-w-[120px]">INVERTIDO (VM − BP)</th>
+                <th class="py-2.5 px-3 text-right min-w-[120px]">BENEFICIO / PÉRDIDA</th>
+                <th class="py-2.5 px-3 text-right min-w-[110px]">RENTABILIDAD (BP / CI × 100)</th>
+              </tr>
+            </thead>
+            <tbody id="prFondosBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono-num text-[11.5px]"></tbody>
+            <tfoot id="prFondosTfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- ══ GUÍA VISUAL: CÓMO SE CALCULA LA RENTABILIDAD ══ -->
+      <div id="fondosCalculationGuide"
+        class="rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-gradient-to-br from-emerald-50 via-white to-slate-50 dark:from-emerald-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-emerald-100 dark:border-emerald-900/50">
+          <div class="flex items-start gap-3">
+            <div
+              class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+              <i class="ph-bold ph-calculator text-lg"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">CÓMO SE CALCULA
+                TU RENTABILIDAD</h3>
+              <p id="fondosCalculationGuideSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                El método de cálculo se adapta a la fuente disponible. El ROI mostrado es simple y no está anualizado; consulta la nota de método para interpretar la cifra correctamente.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div class="rounded-xl bg-white/90 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-3">
+            <div class="flex items-center justify-between gap-2"><span
+                class="text-[10px] font-bold uppercase tracking-wider text-slate-400">1 · Valor de mercado</span><i
+                class="ph ph-chart-line-up text-emerald-500"></i></div>
+            <p id="fondosGuideValue"
+              class="mt-1.5 text-xl font-extrabold font-mono-num text-emerald-600 dark:text-emerald-400">—</p>
+            <p class="mt-1 text-[10px] text-slate-400">Suma de los <strong>TOTAL</strong> de todos los fondos en la
+              última fila.</p>
+          </div>
+          <div class="rounded-xl bg-white/90 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-3">
+            <div class="flex items-center justify-between gap-2"><span
+                id="fondosGuideGainLabel" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">2 · Ganancia registrada</span><i
+                class="ph ph-trend-up text-emerald-500"></i></div>
+            <p id="fondosGuideGain"
+              class="mt-1.5 text-xl font-extrabold font-mono-num text-emerald-600 dark:text-emerald-400">—</p>
+            <p id="fondosGuideGainSub" class="mt-1 text-[10px] text-slate-400">La ganancia corresponde a la última fila importada disponible.</p>
+          </div>
+          <div class="rounded-xl bg-white/90 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-3">
+            <div class="flex items-center justify-between gap-2"><span
+                id="fondosGuideInvestedLabel" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">3 · Capital neto calculado</span><i
+                class="ph ph-wallet text-blue-500"></i></div>
+            <p id="fondosGuideInvested"
+              class="mt-1.5 text-xl font-extrabold font-mono-num text-slate-900 dark:text-white">—</p>
+            <p id="fondosGuideInvestedSub" class="mt-1 text-[10px] text-slate-400">Método de cálculo según el origen de los datos.</p>
+          </div>
+          <div class="rounded-xl bg-white/90 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 p-3">
+            <div class="flex items-center justify-between gap-2"><span
+                id="fondosGuideRoiLabel" class="text-[10px] font-bold uppercase tracking-wider text-slate-400">4 · ROI simple</span><i
+                class="ph ph-percent text-blue-500"></i></div>
+            <p id="fondosGuideRoi"
+              class="mt-1.5 text-xl font-extrabold font-mono-num text-emerald-600 dark:text-emerald-400">—</p>
+            <p id="fondosGuideFormula" class="mt-1 text-[10px] text-slate-400">Ganancia ÷ capital neto × 100; no anualizado.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ ANÁLISIS DE CARTERA DE FONDOS INDEXADOS ══ -->
+      <div id="fondosAnalyticsSection" class="space-y-4">
+
+        <!-- Distribución real de la cartera por fondo -->
+        <div class="chart-card space-y-3">
+          <div class="flex items-start justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <i class="ph-bold ph-chart-donut text-emerald-500 text-sm"></i>
+                <h3 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  ¿DÓNDE ESTÁ MI DINERO?
+                </h3>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">
+                Distribución de la última fila de seguimiento: <span class="font-semibold">TOTAL de cada fondo ÷ TOTAL
+                  CARTERA</span>.
+              </p>
+            </div>
+            <span id="fondosAllocationTotal"
+              class="text-[10px] font-mono font-semibold text-slate-400 whitespace-nowrap">—</span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_310px] gap-4 items-center">
+            <div class="relative h-[235px] sm:h-[255px]">
+              <canvas id="chartFondosAllocation"></canvas>
+              <div id="fondosAllocationCenter"
+                class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <div class="text-center leading-tight">
+                  <div class="text-[9px] font-bold uppercase tracking-wider text-slate-400">TOTAL CARTERA</div>
+                  <div id="fondosAllocationCenterValue"
+                    class="mt-0.5 text-sm font-extrabold font-mono-num text-slate-900 dark:text-white">—</div>
+                </div>
+              </div>
+            </div>
+            <div id="fondosAllocationLegend"
+              class="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 p-3 space-y-2 max-h-[255px] overflow-y-auto">
+              <p class="text-xs text-slate-400 text-center py-6">Añade valores por fondo en la última fila de
+                seguimiento.</p>
+            </div>
+          </div>
+          <div id="fondosAllocationFormula"
+            class="text-[10px] text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-2">
+            Ejemplo: (TOTAL del fondo × 100) / TOTAL CARTERA.
+          </div>
+        </div>
+
+        <!-- Exposición sectorial: ponderada por el valor de la cartera y con tooltip exacto -->
+        <div class="chart-card space-y-4" id="fondosSectorCard">
+          <div
+            class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <i class="ph-bold ph-chart-bar-horizontal text-blue-500 text-base"></i>
+                <h3 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  ¿EN QUÉ INVIERTEN LOS FONDOS?
+                </h3>
+              </div>
+              <p id="fondosSectorSubtitle"
+                class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 mt-1.5 max-w-3xl">
+                Exposición sectorial ponderada por el dinero invertido. Pasa el cursor sobre una barra para ver el
+                porcentaje y el importe estimado.
+              </p>
+            </div>
+            <div class="flex flex-col gap-1.5 w-full lg:w-64 shrink-0">
+              <label for="fondosSectorFundFilter"
+                class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Analizar</label>
+              <select id="fondosSectorFundFilter"
+                class="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500">
+                <option value="__portfolio__">Toda la cartera (ponderada)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="fondosSectorSummary" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div
+              class="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 p-3">
+              <div class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Cartera considerada</div>
+              <div id="fondosSectorTotalValue"
+                class="mt-1 text-base font-extrabold font-mono-num text-slate-900 dark:text-white">20.353,22 €</div>
+            </div>
+            <div
+              class="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 p-3">
+              <div id="fondosSectorCoverageLabel" class="text-[9px] uppercase tracking-wider font-bold text-slate-400">
+                Distribución total de cartera</div>
+              <div id="fondosSectorCoverage"
+                class="mt-1 text-base font-extrabold font-mono-num text-blue-600 dark:text-blue-400">100,00%</div>
+              <div id="fondosSectorCoverageSub" class="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">Sectores
+                identificados + importe sin desglose</div>
+            </div>
+            <div
+              class="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 p-3">
+              <div class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Sector con más peso</div>
+              <div id="fondosSectorTop" class="mt-1 text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                Tecnología</div>
+              <div id="fondosSectorTopPct" class="text-[10px] text-slate-500 dark:text-slate-400 font-mono-num">35,00%
+                de la cartera</div>
+            </div>
+          </div>
+
+          <div class="relative h-[390px] sm:h-[440px]">
+            <canvas id="chartFondosSectores" aria-label="Exposición porcentual a sectores de inversión"
+              role="img"></canvas>
+            <div id="fondosSectorEmpty"
+              class="hidden absolute inset-0 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/20 flex-col items-center justify-center text-center px-6">
+              <i class="ph ph-chart-bar-horizontal text-3xl text-slate-400 mb-2"></i>
+              <p id="fondosSectorEmptyTitle" class="text-sm font-bold text-slate-700 dark:text-slate-200">No hay valores
+                disponibles</p>
+              <p id="fondosSectorEmptyText" class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md">Introduce
+                el TOTAL de cada fondo en la última fila mensual para calcular la exposición real de toda la cartera.
+              </p>
+            </div>
+          </div>
+          <div id="fondosSectorDataNote"
+            class="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-3">
+            En la vista global, cada porcentaje es la exposición sectorial estimada en euros dividida entre el valor
+            total de la cartera. Los fondos sin desglose sectorial se muestran como «Sin datos sectoriales».
+          </div>
+        </div>
+
+        <!-- Top holdings -->
+        <div class="chart-card space-y-3">
+          <div class="flex items-start justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <i class="ph-bold ph-list-numbers text-amber-500 text-sm"></i>
+                <h3 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  PRINCIPALES POSICIONES
+                </h3>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">
+                Las 5 mayores posiciones de cada fondo, con su peso dentro del propio fondo.
+              </p>
+            </div>
+            <span class="text-[10px] text-slate-400 whitespace-nowrap">Composición</span>
+          </div>
+          <div id="fondosTopHoldingsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ TABLA DE FONDOS INDEXADOS: SEGUIMIENTO MENSUAL SIMPLE (IDÉNTICO A BANCA) ══ -->
+      <div data-table-key="myinvestor"
+        class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden space-y-4 table-readonly">
+        <div
+          class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/30">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs bg-gradient-to-tr from-emerald-600 to-teal-600">
+              <i class="ph-bold ph-trend-up text-xl"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  SEGUIMIENTO MENSUAL DE FONDOS INDEXADOS
+                </h3>
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  🟢 Inversión Indexada
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Cartera: <span id="statFondosTableValor"
+                  class="font-bold font-mono-num text-slate-900 dark:text-white">—</span>
+                &middot; <span id="statFondosTableGainLabel">Ganancia registrada:</span> <span id="statFondosTableGanancia"
+                  class="font-bold font-mono-num text-emerald-600 dark:text-emerald-400">—</span>
+                &middot; ROI: <span id="statFondosTableRoi"
+                  class="font-bold font-mono-num text-emerald-600 dark:text-emerald-400">—</span>
+                &middot; <span id="fondosRowCountLabel">0 registros</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" data-edit-toggle
+              class="table-edit-toggle inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+              onclick="toggleTableEditMode('myinvestor', this)" aria-pressed="false" title="Activar edición">
+              <i class="ph-bold ph-pencil-simple edit-toggle-icon" aria-hidden="true"></i><span
+                class="edit-toggle-label">Editar</span>
+            </button>
+            <button onclick="addMyInvestorRow()" data-edit-add-row disabled aria-disabled="true"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition flex items-center gap-1">
+              <i class="ph-bold ph-plus text-xs"></i><span>Añadir Fila</span>
+            </button>
+            <button onclick="openPasteModalFor('myinvestor')" data-edit-action
+              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1"
+              title="Pegar desde Excel directamente en esta tabla">
+              <i class="ph-bold ph-clipboard text-xs text-emerald-500"></i><span>Pegar Excel</span>
+            </button>
+            <button onclick="copyTableToClipboard('myinvestorTable')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1">
+              <i class="ph ph-copy text-xs text-slate-400"></i><span>Copiar</span>
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px]">
+          <span class="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span
+              class="w-2 h-2 rounded-full bg-blue-500"></span><strong>MOVIMIENTO</strong> = dinero que entra o
+            sale</span>
+          <span class="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span
+              class="w-2 h-2 rounded-full bg-emerald-500"></span><strong>TOTAL</strong> = valor acumulado del
+            fondo</span>
+          <span class="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span
+              class="w-2 h-2 rounded-full bg-slate-500"></span><strong>TOTAL CARTERA</strong> = suma de todos los
+            TOTAL</span>
+          <span class="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400"><span
+              class="w-2 h-2 rounded-full bg-amber-500"></span><strong>PLUSVALÍA</strong> = ganancia comercial</span>
+        </div>
+
+        <!-- BARRA DE BÚSQUEDA POR FECHA -->
+        <div
+          class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-1 max-w-sm sm:max-w-md">
+            <div class="relative flex-1">
+              <i class="ph ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="searchFecha_fondos" placeholder="Buscar por fecha (ej. 2025, 01/2025)..."
+                class="w-full pl-8 pr-3 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition"
+                oninput="filterFondosTableRows(this.value)">
+            </div>
+            <div id="drp_fondos_container"></div>
+          </div>
+          <span class="text-[11px] text-slate-400 font-mono" id="searchCount_fondos"></span>
+        </div>
+
+        <!-- TABLA EXCEL DE FONDOS -->
+        <div class="overflow-x-auto max-h-[460px] px-1">
+          <table id="myinvestorTable" class="excel-table w-full text-xs border-collapse">
+            <thead id="myinvestorTableHead"></thead>
+            <tbody id="myinvestorTableBody"
+              class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono-num text-[11.5px]"></tbody>
+          </table>
+        </div>
+
+        <div id="myinvestorEmptyState" class="hidden text-center py-6 text-slate-400 text-xs">
+          Sin registros en fondos. Añade primero los fondos en MONITOR DE FONDOS y después pulsa "+ Añadir Fila".
+        </div>
+
+        <!-- PIE DE TARJETA -->
+        <div
+          class="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span class="text-[11px] text-slate-400">Movimientos y valor por fondo · TOTAL CARTERA se calcula solo · la
+            plusvalía comercial se conserva cuando viene de la fuente</span>
+          <button onclick="addMyInvestorRow()" data-edit-add-row disabled aria-disabled="true"
+            class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition flex items-center gap-1">
+            <i class="ph-bold ph-plus text-xs"></i><span>Añadir fila a Fondos Indexados</span>
+          </button>
+        </div>
+
+        <!-- GRÁFICA DE EVOLUCIÓN (LINE-CURVE, LINE-STRAIGHT, BAR) -->
+        <div class="px-4 pb-4">
+          <div
+            class="bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between" id="chartFondosToolbar">
+              <div class="flex items-center gap-1.5">
+                <i class="ph-bold ph-trend-up text-emerald-500 text-xs"></i>
+                <span
+                  class="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">EVOLUCIÓN
+                  PATRIMONIAL & GANANCIA (€)</span>
+              </div>
+            </div>
+            <div class="relative" style="height: 140px;">
+              <canvas id="chartFondosEvolucion"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+       3. AHORRO (MENSUAL, ANUAL & MATRICES INTERANUALES) — TERCERA PESTAÑA
+       ════════════════════════════════════════════════════════════════════════ -->
+    <section id="page-ahorro" class="section-page space-y-6">
+      <!-- ════════════════════════════════════════════════════════════════════════
+           AHORRO · RESUMEN REAL Y CONTROL MANUAL
+           ════════════════════════════════════════════════════════════════════════ -->
+      <div
+        class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-start gap-3 min-w-0">
+          <div
+            class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md bg-gradient-to-tr from-amber-600 to-orange-500 flex-shrink-0">
+            <i class="ph-bold ph-piggy-bank text-xl"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">AHORRO ·
+                CONTROL REAL</h2>
+              <span id="ahorroDataSourcesCountBadge"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">0
+                fuentes de datos</span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-3xl">
+              Aquí se separan claramente los <strong>datos reales consolidados</strong> de Banca y Fondos del histórico
+              anual de ahorro que introduces manualmente.
+            </p>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- ══ 1. FOTO REAL ACTUAL ══ -->
+      <div class="grid grid-cols-2 xl:grid-cols-4 gap-3" id="ahorroAutoKpis"></div>
+      <!-- ══ 2. EVOLUCIÓN PATRIMONIAL COMBINADA ══ -->
+      <div id="ahorroEvolucionPatrimonioCard" class="chart-card space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          id="chartAhorroEvolucionPatrimonioHeader">
+          <div>
+            <h3
+              class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="ph-bold ph-chart-line-up text-amber-500 text-sm"></i> EVOLUCIÓN PATRIMONIAL · BANCA + FONDOS
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Una única evolución sincronizada con Banca, Fondos y el
+              patrimonio total.</p>
+          </div>
+        </div>
+        <div class="relative" style="height: 260px;"><canvas id="chartAhorroEvolucionPatrimonio"></canvas></div>
+      </div>
+
+      <!-- ══ HISTÓRICO DE AHORRO POR AÑOS ══ -->
+      <div class="space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">HISTÓRICO DE AHORRO
+                POR AÑOS</h3>
+              <span id="ahorroYearsCountBadge"
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">0
+                años</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Cada tarjeta representa un año. Puedes crear 2020, 2021, 2022… aunque
+              sea anterior al año actual, editar los 12 meses y eliminar un año completo.</p>
+            <p class="text-[10px] text-amber-700 dark:text-amber-300 mt-1.5 inline-flex items-center gap-1.5" role="note">
+              <i class="ph ph-arrows-down-up" aria-hidden="true"></i>
+              <span>Desplázate dentro de esta zona para consultar más años; cada tarjeta mantiene visibles sus 12 meses.</span>
+            </p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <button type="button" onclick="syncMatricesFromFinancialData(true)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition"
+              title="Autocompletar tablas con las cifras de total de mes final calculadas desde Banca y Fondos">
+              <i class="ph-bold ph-arrows-clockwise text-xs text-amber-600 dark:text-amber-400"></i><span>Autocompletar totales</span>
+            </button>
+            <div
+              class="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Nuevo año</span>
+              <input id="ahorroNewYearInput" type="number" min="1900" max="2100"
+                class="w-20 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
+                aria-label="Año a crear">
+              <button type="button" onclick="addNewYearMatrix()"
+                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-white bg-amber-600 hover:bg-amber-700 transition"
+                title="Crear el año indicado, incluso si es un año pasado">
+                <i class="ph-bold ph-plus text-xs"></i><span>Crear</span>
+              </button>
+            </div>
+            <button type="button" onclick="openPasteModalFor('matrizAnual')"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+              <i class="ph-bold ph-clipboard-text text-xs text-amber-500"></i><span>Importar años</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="matricesAnualesContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" tabindex="0" aria-label="Histórico de ahorro anual; desplázate para ver más años"></div>
+        <div id="matricesEmptyState" class="hidden chart-card text-center py-10">
+          <div
+            class="w-11 h-11 mx-auto rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-500 flex items-center justify-center text-xl mb-3">
+            <i class="ph ph-calendar-plus"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Todavía no hay histórico anual.</p>
+          <p class="text-xs text-slate-400 mt-1 mb-4">Escribe cualquier año en “Nuevo año” para crear la tabla
+            correspondiente.</p>
+          <button type="button" onclick="focusAhorroYearCreator()"
+            class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold">Crear primer
+            año</button>
+        </div>
+
+        <!-- ══ RESUMEN ANUAL DEL AHORRO ══ -->
+        <div class="chart-card space-y-4">
+          <div
+            class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800"
+            id="chartDiferenciaAnualHeader">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">RESUMEN ANUAL DEL
+                  AHORRO</h3>
+                <span
+                  class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Manual
+                  · Histórico</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Variación entre el primer mes con valor y el último mes con valor
+                de
+                cada año registrado.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+            <div class="xl:col-span-8 min-w-0">
+              <div class="relative" style="height: 260px;"><canvas id="chartDiferenciaAnual"></canvas></div>
+            </div>
+            <div
+              class="xl:col-span-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800 overflow-x-auto">
+              <table class="w-full text-xs font-mono-num">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 text-[10px] uppercase">
+                    <th class="py-2 px-2 text-left">AÑO</th>
+                    <th class="py-2 px-2 text-right">INICIO</th>
+                    <th class="py-2 px-2 text-right">CIERRE</th>
+                    <th class="py-2 px-2 text-right">VARIACIÓN</th>
+                  </tr>
+                </thead>
+                <tbody id="resumenDiferenciasTableBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+              </table>
+              <div id="resumenDiferenciasEmpty" class="text-center py-5 text-xs text-slate-400">Crea tu primer año para
+                ver el resumen.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+       4. DASHBOARD (RESUMEN GLOBAL) — CUARTA Y ÚLTIMA PESTAÑA
+       ════════════════════════════════════════════════════════════════════════ -->
+    <section id="page-dashboard" class="section-page space-y-6">
+      <div class="pb-2 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md bg-gradient-to-tr from-blue-600 to-indigo-600">
+            <i class="ph-bold ph-chart-pie-slice text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">DASHBOARD
+              GENERAL DE PATRIMONIO</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Visión consolidada · <span
+                class="text-blue-600 dark:text-blue-400 font-semibold">Resumen según los últimos registros guardados</span></p>
+          </div>
+        </div>
+        <button onclick="renderDashboardSection()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 transition">
+          <i class="ph-bold ph-arrows-clockwise text-xs"></i><span>Recalcular</span>
+        </button>
+      </div>
+
+      <!-- Top Global KPIs -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div class="stat-card border-l-4 border-l-blue-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Patrimonio financiero registrado</p>
+          <p id="kpiNetWorth" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-mono-num">—
+          </p>
+          <span class="text-[11px] text-slate-400 mt-1 block">Fondos + Cuentas Bancarias</span>
+        </div>
+        <div class="stat-card border-l-4 border-l-emerald-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Fondos Indexados</p>
+          <p id="kpiFondosTotal"
+            class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono-num">—</p>
+          <span id="kpiFondosReturn"
+            class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mt-1 block">Plusvalía: —</span>
+        </div>
+        <div class="stat-card border-l-4 border-l-purple-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total Banca Multientidad</p>
+          <p id="kpiBancaTotal"
+            class="text-2xl sm:text-3xl font-extrabold text-purple-600 dark:text-purple-400 font-mono-num">—</p>
+          <span id="kpiBancaIntereses" class="text-[11px] text-slate-400 mt-1 block">Suma de saldos actuales</span>
+        </div>
+        <div class="stat-card border-l-4 border-l-amber-600">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ganancia del último periodo (Banca)</p>
+          <p id="kpiInteresesBanca"
+            class="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400 font-mono-num">—</p>
+          <span id="kpiAhorroMejorAnio" class="text-[11px] text-slate-400 mt-1 block">Suma de la última CANTIDAD GANADA
+            de cada cuenta remunerada</span>
+        </div>
+      </div>
+
+      <!-- Resumen financiero interpretativo: distribución, fechas y alcance del cálculo. -->
+      <div id="dashboardFinancialContext" class="grid grid-cols-1 md:grid-cols-3 gap-3" aria-label="Contexto del patrimonio"></div>
+
+      <!-- Bank Snapshot Table -->
+      <div id="dashBancaBreakdownCard"
+        class="hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">DESGLOSE POR ENTIDAD
+              BANCARIA</h3>
+            <p class="text-xs text-slate-400">Saldo y movimientos extraídos de tus tablas &middot; Arrastra las filas
+              para reordenar los bancos</p>
+          </div>
+          <i class="ph-bold ph-bank text-purple-500 text-lg"></i>
+        </div>
+        <div
+          class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/20 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-1 max-w-sm sm:max-w-md">
+            <div class="relative flex-1">
+              <i class="ph ph-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" id="searchFecha_dashBanca" placeholder="Buscar por entidad o fecha..."
+                class="w-full pl-8 pr-3 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-purple-500 transition"
+                oninput="filterDashBancaRows(this.value)">
+            </div>
+            <div id="drp_dashBanca_container"></div>
+          </div>
+          <span class="text-[11px] text-slate-400 font-mono" id="searchCount_dashBanca"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="excel-table w-full text-xs border-collapse">
+            <thead>
+              <tr
+                class="table-sticky-header border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-bold text-[11px]">
+                <th class="py-2.5 px-2 w-8 text-center text-slate-400"></th>
+                <th class="py-2.5 px-3 text-left">ENTIDAD</th>
+                <th class="py-2.5 px-3 text-left">TIPO</th>
+                <th class="py-2.5 px-3 text-left">ÚLTIMA FECHA</th>
+                <th class="py-2.5 px-3 text-right">SALDO ACTUAL</th>
+                <th class="py-2.5 px-3 text-right font-extrabold text-emerald-700 dark:text-emerald-300">GANANCIA
+                  ÚLTIMO PERIODO</th>
+                <th class="py-2.5 px-3 text-right text-blue-600 dark:text-blue-400">Nº REGISTROS</th>
+              </tr>
+            </thead>
+            <tbody id="dashBancaBreakdownBody"
+              class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono-num text-[11.5px]"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="chart-card lg:col-span-2">
+          <div class="flex items-center justify-between mb-4" id="chartGlobalHistoryHeader">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">EVOLUCIÓN
+                PATRIMONIAL</h3>
+              <p class="text-xs text-slate-400">Evolución según los últimos registros disponibles de Banca y Fondos. Cada serie conserva el último saldo conocido.</p>
+            </div>
+            <div class="flex items-center gap-3 text-[10px]">
+              <span class="flex items-center gap-1"><span
+                  class="w-3 h-1.5 rounded bg-blue-500 inline-block"></span>Total</span>
+              <span class="flex items-center gap-1"><span
+                  class="w-3 h-1.5 rounded bg-emerald-500 inline-block"></span>Fondos</span>
+              <span class="flex items-center gap-1"><span
+                  class="w-3 h-1.5 rounded bg-purple-500 inline-block"></span>Banca</span>
+            </div>
+          </div>
+          <div class="relative" style="height: 280px;">
+            <canvas id="chartGlobalHistory"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">DISTRIBUCIÓN
+                PATRIMONIAL</h3>
+              <p class="text-xs text-slate-400">% de asignación global</p>
+            </div>
+            <i class="ph-bold ph-chart-donut text-slate-400 text-xl"></i>
+          </div>
+          <div class="relative" style="height: 200px;">
+            <canvas id="chartGlobalAllocation"></canvas>
+          </div>
+          <div id="globalAllocationLegend" class="mt-4 space-y-1.5 text-xs"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL: CREAR NUEVA TABLA BANCARIA (BBVA, NORWEGIAN, TRADE REPUBLIC...)
+     ══════════════════════════════════════════════════════════════════════════ -->
+  <div id="modalCreateBankTable"
+    class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-3 overflow-y-auto"
+    style="display:none;">
+    <div
+      class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow bg-purple-600">
+            <i class="ph-bold ph-bank text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Añadir Nueva Cuenta</h3>
+            <p class="text-xs text-slate-400">Configura una nueva cuenta para cualquier entidad</p>
+          </div>
+        </div>
+        <button onclick="closeCreateBankTableModal()"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+      </div>
+
+      <form id="formCreateBankTable" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Nombre de la Entidad /
+            Banco:</label>
+          <input type="text" id="bankTableNameInput" required placeholder="Ej. Norwegian, BBVA, Trade Republic..."
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-purple-500">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tipo de Cuenta / ¿Genera % de
+            interés?:</label>
+          <div class="space-y-2">
+            <!-- Option 1: Remunerated with Interest % -->
+            <label
+              class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 transition has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/30 dark:has-[:checked]:bg-purple-950/20">
+              <input type="radio" name="bankInterestOption" value="true" checked
+                class="mt-0.5 text-purple-600 focus:ring-purple-500">
+              <div>
+                <span class="font-bold text-slate-900 dark:text-white block">Cuenta Remunerada / Depósito (Con % de
+                  interés)</span>
+                <span class="text-[11px] text-slate-400 block mt-0.5">Como Norwegian: columnas Fecha, Transferencia,
+                  Cantidad Total, Interés (%) con colores por variación, y Cantidad Ganada (€).</span>
+              </div>
+            </label>
+
+            <!-- Option 2: Standard Account without Interest % -->
+            <label
+              class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 transition has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/30 dark:has-[:checked]:bg-purple-950/20">
+              <input type="radio" name="bankInterestOption" value="false"
+                class="mt-0.5 text-purple-600 focus:ring-purple-500">
+              <div>
+                <span class="font-bold text-slate-900 dark:text-white block">Cuenta Estándar / Operativa (Sin interés
+                  %)</span>
+                <span class="text-[11px] text-slate-400 block mt-0.5">Como BBVA corriente: columnas Fecha,
+                  Transferencias, Valor Liquidativo / Saldo, Cantidad Total y Diferencia Mensual.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" onclick="closeCreateBankTableModal()"
+            class="px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800">Cancelar</button>
+          <button type="submit"
+            class="px-4 py-1.5 text-white font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 shadow-sm">Crear
+            Cuenta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL: PEGAR DESDE EXCEL / HOJAS DE CÁLCULO (UNIVERSAL)
+     ══════════════════════════════════════════════════════════════════════════ -->
+  <div id="pasteModal"
+    class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-3 overflow-y-auto"
+    style="display:none;">
+    <div
+      class="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 my-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md bg-gradient-to-tr from-indigo-600 to-blue-600">
+            <i class="ph-bold ph-clipboard-text text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Pegar datos desde Excel o Google Sheets</h3>
+            <p class="text-xs text-slate-400">Copia celdas en tu Excel y pégalas aquí directamente</p>
+          </div>
+        </div>
+        <button onclick="closePasteModal()"
+          class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Destino de los datos:</label>
+          <select id="pasteTargetSelect"
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500">
+            <!-- Dynamically populated with bank tables and the annual Ahorro matrix -->
+          </select>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="font-semibold text-slate-700 dark:text-slate-300">Pega aquí el contenido (Ctrl+V /
+              Cmd+V):</label>
+            <span class="text-[11px] text-slate-400">Detecta tabuladores y saltos de línea de Excel</span>
+          </div>
+          <textarea id="pasteTextInput" rows="6" placeholder="Pega aquí las celdas copiadas de Excel..."
+            class="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-mono text-[11px] focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+        </div>
+
+        <!-- Preview Box -->
+        <div id="pastePreviewBox"
+          class="hidden bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-semibold text-slate-700 dark:text-slate-300 text-[11px]">Vista previa de datos
+              detectados:</span>
+            <span id="pastePreviewBadge"
+              class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">0
+              filas</span>
+          </div>
+          <div class="overflow-x-auto max-h-36">
+            <table class="w-full text-[10.5px] font-mono-num border-collapse">
+              <tbody id="pastePreviewTbody" class="divide-y divide-slate-200 dark:divide-slate-700"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Mode selection -->
+        <div class="flex items-center gap-4 pt-1">
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="radio" name="pasteMode" value="append" checked>
+            <span class="text-slate-700 dark:text-slate-300">Añadir al final de la tabla</span>
+          </label>
+          <label class="flex items-center gap-1.5 cursor-pointer">
+            <input type="radio" name="pasteMode" value="replace">
+            <span class="text-slate-700 dark:text-slate-300">Reemplazar toda la tabla</span>
+          </label>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button type="button" onclick="closePasteModal()"
+            class="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition">Cancelar</button>
+          <button type="button" id="btnExecutePaste"
+            class="px-5 py-2 text-white font-semibold rounded-xl shadow-md transition flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700">
+            <i class="ph-bold ph-check text-sm"></i><span>Importar a la Tabla</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACKUP PASSWORD MODAL: branded ECONEXO dialog for encrypting/restoring protected backups -->
+  <div id="backupPasswordModal" aria-hidden="true"
+    class="fixed inset-0 z-[120] hidden items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
+    style="display:none;" role="presentation">
+    <div class="backup-password-panel relative w-full max-w-md my-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden"
+      role="dialog" aria-modal="true" aria-labelledby="backupPasswordTitle" aria-describedby="backupPasswordDescription">
+      <div class="h-1.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-500" aria-hidden="true"></div>
+      <div class="p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-4 mb-5">
+          <div class="flex items-start gap-3.5 min-w-0">
+            <div id="backupPasswordIconWrap" class="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center bg-indigo-100 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-900/70">
+              <span id="backupPasswordIcon"><i class="ph-bold ph-shield-check text-xl" aria-hidden="true"></i></span>
+            </div>
+            <div class="min-w-0 pt-0.5">
+              <p class="text-[9px] font-extrabold uppercase tracking-[.16em] text-indigo-600 dark:text-indigo-400 mb-1">ECONEXO · COPIA DE SEGURIDAD</p>
+              <h2 id="backupPasswordTitle" class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Proteger copia de seguridad</h2>
+              <p id="backupPasswordDescription" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-1">Crea una contraseña para proteger tu información financiera.</p>
+            </div>
+          </div>
+          <button id="backupPasswordClose" type="button" aria-label="Cerrar ventana de contraseña" title="Cerrar"
+            class="shrink-0 inline-flex items-center justify-center p-2 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <i class="ph ph-x text-base" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <form id="backupPasswordForm" class="space-y-4" novalidate>
+          <div id="backupPasswordFields" class="space-y-4">
+            <div>
+              <label id="backupPasswordInputLabel" for="backupPasswordInput" class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">Nueva contraseña</label>
+              <div class="relative">
+                <i class="ph ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" aria-hidden="true"></i>
+                <input id="backupPasswordInput" name="backupPassword" type="password" autocomplete="new-password" required spellcheck="false"
+                  placeholder="Mínimo 8 caracteres"
+                  class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+              </div>
+            </div>
+            <div id="backupPasswordConfirmWrap">
+              <label for="backupPasswordConfirmInput" class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">Repite la contraseña</label>
+              <div class="relative">
+                <i class="ph ph-shield-check absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base" aria-hidden="true"></i>
+                <input id="backupPasswordConfirmInput" name="backupPasswordConfirm" type="password" autocomplete="new-password" spellcheck="false"
+                  placeholder="Vuelve a escribir la contraseña"
+                  class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition">
+              </div>
+            </div>
+            <div class="flex items-start justify-between gap-3">
+              <p id="backupPasswordHint" class="text-[10px] leading-relaxed text-slate-500 dark:text-slate-400">Usa al menos 8 caracteres. Guarda la contraseña en un lugar seguro; ECONEXO no puede recuperarla.</p>
+              <button id="backupPasswordToggle" type="button" aria-pressed="false"
+                class="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition">
+                <i class="ph ph-eye text-base" aria-hidden="true"></i><span>Mostrar</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="backupPasswordFeedback" class="hidden" role="status" aria-live="polite">
+            <i id="backupPasswordFeedbackIcon" class="ph-bold ph-info text-base shrink-0 mt-px" aria-hidden="true"></i>
+            <p id="backupPasswordFeedbackText" class="min-w-0"></p>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <button id="backupPasswordCancel" type="button" class="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition">Cancelar</button>
+            <button id="backupPasswordSubmit" type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-wait text-white text-xs font-semibold shadow-lg shadow-indigo-600/15 transition">
+              <i class="ph-bold ph-shield-check text-sm" aria-hidden="true"></i><span id="backupPasswordSubmitText">Cifrar y exportar</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- CONFIRM DIALOG -->
+  <div id="confirmDialog"
+    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+    style="display:none;">
+    <div
+      class="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl">
+          <i class="ph-bold ph-warning text-xl"></i>
+        </div>
+        <div>
+          <h3 id="confirmTitle" class="text-sm font-bold text-slate-900 dark:text-white">¿Confirmar?</h3>
+          <p id="confirmMsg" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button id="confirmCancel"
+          class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs">Cancelar</button>
+        <button id="confirmOk"
+          class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav
+    class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-1 py-1.5 flex items-center justify-around shadow-2xl">
+    <button class="mobile-tab flex flex-col items-center flex-1 py-1" data-section="banca" style="color:#7c3aed">
+      <i class="ph-bold ph-bank text-lg"></i><span class="text-[9px] mt-0.5 font-semibold">Banca</span>
+    </button>
+    <button class="mobile-tab flex flex-col items-center flex-1 py-1 text-slate-400" data-section="fondos">
+      <i class="ph-bold ph-trend-up text-lg"></i><span class="text-[9px] mt-0.5 font-semibold">Fondos</span>
+    </button>
+    <button class="mobile-tab flex flex-col items-center flex-1 py-1 text-slate-400" data-section="ahorro">
+      <i class="ph-bold ph-calendar-check text-lg"></i><span class="text-[9px] mt-0.5 font-semibold">Ahorro</span>
+    </button>
+    <button class="mobile-tab flex flex-col items-center flex-1 py-1 text-slate-400" data-section="dashboard">
+      <i class="ph-bold ph-chart-pie-slice text-lg"></i><span class="text-[9px] mt-0.5 font-semibold">Dashboard</span>
+    </button>
+  </nav>
+
+  <!-- Full-screen local chart styled after the reference screenshot. No third-party iframe is embedded. -->
+  <div id="fundChartModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="fundChartTitle" tabindex="-1">
+    <div class="fund-chart-shell">
+      <div class="fund-chart-topbar">
+        <div class="fund-chart-brandline">
+          <span class="fund-chart-dot"></span><span>ECONEXO · GRÁFICO DEL FONDO</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="fundChartRefresh" type="button" class="fund-chart-icon-btn" title="Actualizar histórico" aria-label="Actualizar histórico">
+            <i id="fundChartRefreshIcon" class="ph-bold ph-arrows-clockwise"></i>
+          </button>
+          <button id="fundChartClose" type="button" class="fund-chart-icon-btn" title="Cerrar gráfica" aria-label="Cerrar gráfica">
+            <i class="ph-bold ph-x"></i>
+          </button>
+        </div>
+      </div>
+      <div class="fund-chart-heading">
+        <div id="fundChartTitle" class="fund-chart-title">Gráfica del fondo</div>
+        <div class="fund-chart-quote-line">
+          <span id="fundChartDirection" class="fund-chart-direction" aria-hidden="true">▲</span>
+          <strong id="fundChartLast" class="fund-chart-last">—</strong>
+          <strong id="fundChartChange" class="fund-chart-change">—</strong>
+        </div>
+        <div id="fundChartSubtitle" class="fund-chart-subtitle">Histórico consultado desde Investing.com</div>
+      </div>
+      <div class="fund-chart-canvas-wrap">
+        <div id="fundChartLoading" class="fund-chart-loading hidden" role="status" aria-live="polite">
+          <i class="ph-bold ph-circle-notch animate-spin" aria-hidden="true"></i><span id="fundChartLoadingText">Obteniendo histórico…</span>
+        </div>
+        <div id="fundChartEmpty" class="fund-chart-empty hidden">
+          <i class="ph ph-chart-line-up text-3xl" aria-hidden="true"></i>
+          <strong id="fundChartEmptyTitle">No hay datos históricos suficientes</strong>
+          <span id="fundChartEmptyMessage">No se dibujará ninguna curva inventada. Actualiza el histórico o abre la fuente original.</span>
+          <a id="fundChartSourceLink" href="https://es.investing.com/" target="_blank" rel="noopener noreferrer"
+            class="fund-chart-source-link">
+            Abrir gráfica original en Investing.com <i class="ph ph-arrow-square-out" aria-hidden="true"></i>
+          </a>
+        </div>
+        <canvas id="fundChartCanvas" aria-label="Gráfica histórica del valor liquidativo"></canvas>
+      </div>
+      <div id="fundChartRanges" class="fund-chart-ranges" aria-label="Periodo de la gráfica">
+        <button type="button" class="fund-chart-range" data-fund-range="day" aria-pressed="false">1 día</button>
+        <button type="button" class="fund-chart-range" data-fund-range="week" aria-pressed="false">1 semana</button>
+        <button type="button" class="fund-chart-range" data-fund-range="month" aria-pressed="false">1 mes</button>
+        <button type="button" class="fund-chart-range" data-fund-range="3months" aria-pressed="false">3 meses</button>
+        <button type="button" class="fund-chart-range active" data-fund-range="6months" aria-pressed="true">6 meses</button>
+        <button type="button" class="fund-chart-range" data-fund-range="year" aria-pressed="false">1 año</button>
+        <button type="button" class="fund-chart-range" data-fund-range="5years" aria-pressed="false">5 años</button>
+        <button type="button" class="fund-chart-range" data-fund-range="max" aria-pressed="false">Máx.</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════
+     CORE APPLICATION JAVASCRIPT
+     ══════════════════════════════════════════════════════════════════════════ -->
+      <!-- ECONEXO modular scripts: classic ordered loading preserves existing inline UI contracts. -->
+  <script src="./js/core/database.js?v=2.2.1"></script>
+  <script src="./js/core/state.js?v=2.2.1"></script>
+  <script src="./js/core/utils.js?v=2.2.1"></script>
+  <script src="./js/core/events.js?v=2.2.1"></script>
+  <script src="./js/charts/chart-core.js?v=2.2.1"></script>
+  <script src="./js/backup/backup.js?v=2.2.1"></script>
+  <script src="./js/core/storage.js?v=2.2.1"></script>
+  <script src="./js/ui/toast.js?v=2.2.1"></script>
+  <script src="./js/ui/modal.js?v=2.2.1"></script>
+  <script src="./js/ui/theme.js?v=2.2.1"></script>
+  <script src="./js/ui/date-range-picker.js?v=2.2.1"></script>
+  <script src="./js/charts/chart-modes.js?v=2.2.1"></script>
+  <script src="./js/banca/banca.js?v=2.2.1"></script>
+  <script src="./js/fondos/funds-analytics.js?v=2.2.1"></script>
+  <script src="./js/fondos/funds-portfolio-returns.js?v=2.2.1"></script>
+  <script src="./js/fondos/funds-quotes.js?v=2.2.1"></script>
+  <script src="./js/fondos/fondos.js?v=2.2.1"></script>
+  <script src="./js/ahorro/ahorro.js?v=2.2.1"></script>
+  <script src="./js/fondos/funds-history.js?v=2.2.1"></script>
+  <script src="./js/fondos/funds-charts.js?v=2.2.1"></script>
+  <script src="./js/backup/export-csv.js?v=2.2.1"></script>
+  <script src="./js/backup/export-xlsx.js?v=2.2.1"></script>
+  <script src="./js/backup/encryption.js?v=2.2.1"></script>
+  <script src="./js/backup/password-modal.js?v=2.2.1"></script>
+  <script src="./js/backup/export-json.js?v=2.2.1"></script>
+  <script src="./js/fondos/funds-sync.js?v=2.2.1"></script>
+  <script src="./js/app.js?v=2.2.1"></script>
+
+
+
+  
+
+</body>
+
+</html>

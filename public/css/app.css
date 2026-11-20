@@ -1,0 +1,3053 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* Variables globales de color; los valores de .dark sustituyen el tema oscuro. */
+:root {
+  --app-bg: #f4f6fa;
+  --panel-bg: #ffffff;
+  --card-bg: #ffffff;
+  --border: #e2e8f0;
+  --subtle-bg: #f8fafc;
+}
+
+
+
+.dark {
+  --app-bg: #090e17;
+  --panel-bg: #0f172a;
+  --card-bg: #131d31;
+  --border: #1e2c42;
+  --subtle-bg: #0d1527;
+}
+
+
+
+html,
+body {
+  background-color: var(--app-bg) !important;
+  transition: background-color .2s;
+}
+
+
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #1e293b;
+}
+
+
+
+.dark body {
+  color: #f1f5f9;
+}
+
+
+
+/* ── Premium startup splash ─────────────────────────────────────────────── */
+/* Pantalla de arranque, progreso y animaciones de carga. */
+#appStartupSplash {
+  --startup-progress: 0deg;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(16, 185, 129, .14), transparent 28%),
+    radial-gradient(circle at 82% 18%, rgba(99, 102, 241, .15), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(14, 165, 233, .10), transparent 34%),
+    var(--app-bg);
+  transition: opacity .45s ease, visibility .45s ease;
+}
+
+
+
+#appStartupSplash::before {
+  content: '';
+  position: absolute;
+  width: 42vw;
+  height: 42vw;
+  min-width: 360px;
+  min-height: 360px;
+  max-width: 720px;
+  max-height: 720px;
+  border-radius: 9999px;
+  background: conic-gradient(from 180deg, rgba(16, 185, 129, .10), rgba(99, 102, 241, .08), rgba(14, 165, 233, .08), rgba(16, 185, 129, .10));
+  filter: blur(24px);
+  animation: startupAmbient 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+
+
+#appStartupSplash.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+
+
+.startup-panel {
+  position: relative;
+  width: min(430px, calc(100vw - 34px));
+  padding: 34px 28px 28px;
+  border: 1px solid rgba(148, 163, 184, .22);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, .80);
+  box-shadow: 0 28px 80px rgba(15, 23, 42, .16), inset 0 1px 0 rgba(255, 255, 255, .75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  text-align: center;
+  animation: startupPanelIn .45s cubic-bezier(.2, .8, .2, 1);
+}
+
+
+
+.dark .startup-panel {
+  background: rgba(15, 23, 42, .78);
+  border-color: rgba(71, 85, 105, .35);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+
+
+
+.startup-brand {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 16px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: linear-gradient(135deg, #4f46e5, #10b981);
+  box-shadow: 0 10px 28px rgba(79, 70, 229, .24);
+  overflow: hidden;
+}
+
+
+
+.startup-brand::after {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, .38) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: startupShine 2.2s ease-in-out infinite;
+}
+
+
+
+.startup-brand i {
+  position: relative;
+  z-index: 1;
+  font-size: 24px;
+}
+
+
+
+/* Marco con bisel y sombras interiores para que el logo parezca encajado. */
+.startup-logo-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 80px;
+  height: 80px;
+  padding: 6px;
+  margin: 9px auto 25px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, .28);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #263449, #0b1220);
+  box-shadow:
+    inset 7px 7px 14px rgba(0, 0, 0, .58),
+    inset -5px -5px 12px rgba(255, 255, 255, .09),
+    0 12px 26px rgba(0, 0, 0, .28);
+}
+
+
+
+.startup-logo {
+  display: block;
+  box-sizing: border-box;
+  width: 65px;
+  height: 65px;
+  object-fit: cover;
+  margin: 0;
+  border-radius: 15px;
+  flex-shrink: 0;
+}
+
+
+
+.startup-loader {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  margin: 4px auto 20px;
+  display: grid;
+  place-items: center;
+}
+
+
+
+.startup-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: conic-gradient(#10b981 var(--startup-progress), rgba(148, 163, 184, .16) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+  filter: drop-shadow(0 5px 12px rgba(16, 185, 129, .18));
+  transition: background .35s ease;
+}
+
+
+
+.startup-loader-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from 215deg, transparent 0 72%, rgba(255, 255, 255, .95) 82%, transparent 90%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  animation: startupSweep 1.45s linear infinite;
+  opacity: .9;
+}
+
+
+
+.startup-loader-sheen {
+  position: absolute;
+  inset: 22px;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, .14);
+  box-shadow: inset 0 0 28px rgba(16, 185, 129, .06), 0 0 24px rgba(99, 102, 241, .05);
+  animation: startupPulse 2.1s ease-in-out infinite;
+}
+
+
+
+.startup-loader-orbit {
+  position: absolute;
+  inset: 10px;
+  border-radius: 9999px;
+  border: 1px dashed rgba(99, 102, 241, .24);
+  animation: startupOrbit 8s linear infinite;
+}
+
+
+
+.startup-loader-orbit::before,
+.startup-loader-orbit::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #6366f1;
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, .10);
+}
+
+
+
+.startup-loader-orbit::before {
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+
+
+.startup-loader-orbit::after {
+  bottom: 14px;
+  right: 8px;
+  background: #06b6d4;
+  box-shadow: 0 0 0 5px rgba(6, 182, 212, .10);
+}
+
+
+
+.startup-loader-core {
+  position: relative;
+  z-index: 2;
+  width: 116px;
+  height: 116px;
+  border-radius: 9999px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, .18);
+  background: rgba(255, 255, 255, .88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 12px 34px rgba(15, 23, 42, .10);
+}
+
+
+
+.dark .startup-loader-core {
+  background: rgba(15, 23, 42, .92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 12px 34px rgba(0, 0, 0, .30);
+}
+
+
+
+#appStartupPercent {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  color: #0f172a;
+}
+
+
+
+.dark #appStartupPercent {
+  color: #f8fafc;
+}
+
+
+
+.startup-percent-label {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+
+
+.startup-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+
+
+.dark .startup-title {
+  color: #f8fafc;
+}
+
+
+
+.startup-message {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+
+
+.dark .startup-message {
+  color: #94a3b8;
+}
+
+
+
+#appStartupFund {
+  margin-top: 12px;
+  min-height: 18px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+.startup-progress-track {
+  width: 100%;
+  height: 6px;
+  margin-top: 14px;
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, .14);
+  overflow: hidden;
+}
+
+
+
+#appStartupProgressBar {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f46e5, #10b981, #06b6d4);
+  transition: width .35s ease;
+}
+
+
+
+#appStartupCount {
+  margin-top: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+
+
+#appStartupActivity {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, .07);
+  border: 1px solid rgba(16, 185, 129, .12);
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+
+
+#appStartupActivityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, .10);
+  animation: startupDot 1.15s ease-in-out infinite;
+}
+
+
+
+.startup-runtime {
+  margin-top: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 9px;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+
+
+.startup-runtime strong {
+  color: #64748b;
+}
+
+
+
+/* Animaciones reutilizadas por la pantalla de inicio y los indicadores de actividad. */
+@keyframes startupSpin {
+  to {
+    transform: rotate(360deg);
+  }
+
+  
+}
+
+
+
+@keyframes startupSweep {
+  to {
+    transform: rotate(360deg);
+  }
+
+  
+}
+
+
+
+@keyframes startupPulse {
+
+  0%,
+  100% {
+    transform: scale(.96);
+    opacity: .65;
+  }
+
+  
+
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+
+  
+}
+
+
+
+@keyframes startupDot {
+
+  0%,
+  100% {
+    transform: scale(.8);
+    opacity: .55;
+  }
+
+  
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+
+  
+}
+
+
+
+@keyframes startupOrbit {
+  to {
+    transform: rotate(360deg);
+  }
+
+  
+}
+
+
+
+@keyframes startupAmbient {
+  from {
+    transform: scale(.92) translate3d(-1%, -1%, 0);
+  }
+
+  
+
+  to {
+    transform: scale(1.04) translate3d(1%, 1%, 0);
+  }
+
+  
+}
+
+
+
+@keyframes startupShine {
+
+  0%,
+  18% {
+    transform: translateX(-120%);
+  }
+
+  
+
+  48%,
+  100% {
+    transform: translateX(120%);
+  }
+
+  
+}
+
+
+
+@keyframes startupPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+  }
+
+  
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  #appStartupSplash::before,
+  .startup-brand::after,
+  .startup-loader-orbit,
+  .startup-panel {
+    animation: none;
+  }
+
+  
+
+  #appStartupProgressBar,
+  .startup-loader-ring {
+    transition: none;
+  }
+
+  
+}
+
+
+
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+
+
+/* Scrollbars */
+/* Personalización visual de las barras de desplazamiento. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 4px;
+}
+
+
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
+}
+
+
+
+/* Navigation tabs (Order: Banca -> Fondos Indexados -> Ahorro -> Dashboard) */
+/* Navegación entre las cuatro secciones principales. */
+.section-tab {
+  position: relative;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+
+
+.section-tab.active {
+  background: white;
+  color: #0f172a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+
+
+.dark .section-tab.active {
+  background: #19253d;
+  color: #f8fafc;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+
+
+.section-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 12px;
+  right: 12px;
+  height: 3px;
+  border-radius: 3px;
+}
+
+
+
+.section-tab[data-section="banca"].active::after {
+  background: #7c3aed;
+}
+
+
+
+.section-tab[data-section="fondos"].active::after {
+  background: #059669;
+}
+
+
+
+.section-tab[data-section="ahorro"].active::after {
+  background: #d97706;
+}
+
+
+
+.section-tab[data-section="dashboard"].active::after {
+  background: #2563eb;
+}
+
+
+
+/* Inputs & Spreadsheet tables */
+/* Campos editables que aparecen dentro de las tablas financieras. */
+
+/* Campo de fecha: ancho justo para "31/12/2025" (10 chars monoespaciado 11.5px). */
+.cell-fecha {
+  min-width: 82px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+
+.cell-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: inherit;
+  transition: all .15s;
+}
+
+
+
+.cell-input:hover {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+
+
+.dark .cell-input:hover {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+
+
+.cell-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+
+
+.dark .cell-input:focus {
+  background: #0f172a;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+
+
+/* Cards */
+/* Tarjetas KPI y estados de interacción de las métricas. */
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 18px;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+
+
+
+.stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+
+
+.dark .stat-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+
+
+/* Contenedores de gráficos y controles para cambiar su visualización. */
+.chart-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+
+
+/* Renderizado eficiente de colecciones largas: el navegador prioriza lo visible.
+       No cambia el DOM ni las fórmulas; solo reduce trabajo de pintura fuera de pantalla. */
+#liveQuotesGrid>.quote-card-draggable {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 230px;
+}
+
+
+
+#fondosTopHoldingsGrid>.fund-badge-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+
+
+#matricesAnualesContainer>[data-table-key] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
+
+
+/* ── Chart mode toolbar ── */
+.chart-mode-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+
+
+.chart-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #94a3b8;
+  background: transparent;
+  transition: all .15s;
+  line-height: 1;
+}
+
+
+
+.chart-mode-btn:hover {
+  background: rgba(124, 58, 237, 0.08);
+  color: #7c3aed;
+}
+
+
+
+.chart-mode-btn.active {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.25);
+  color: #7c3aed;
+}
+
+
+
+#liveQuotesViewModeToolbar .chart-mode-btn {
+  gap: 4px;
+  padding: 5px 8px;
+}
+
+
+
+html.dark .chart-mode-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+
+
+html.dark .chart-mode-btn.active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.35);
+  color: #a78bfa;
+}
+
+
+
+/*
+     * Monitor de cotizaciones: el listado y las tarjetas comparten un área
+     * de desplazamiento. Así el monitor no empuja el resto de la página hacia
+     * abajo cuando se siguen muchos fondos.
+     */
+#liveQuotesGrid {
+  max-height: min(54vh, 560px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  align-content: start;
+  padding: 3px 6px 8px 3px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, .55) transparent;
+}
+
+
+
+#liveQuotesGrid::-webkit-scrollbar {
+  width: 7px;
+}
+
+
+
+#liveQuotesGrid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+
+#liveQuotesGrid::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, .48);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+
+
+#liveQuotesGrid::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, .72);
+  background-clip: padding-box;
+}
+
+
+
+/* Vista en listado del monitor de fondos: una fila por fondo. */
+#liveQuotesGrid.live-monitor-list-view {
+  display: flex !important;
+  flex-direction: column;
+  gap: .625rem !important;
+}
+
+
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 1fr) minmax(185px, .85fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px !important;
+  flex: 0 0 auto;
+}
+
+
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child {
+  min-width: 0;
+}
+
+
+
+#liveQuotesGrid.live-monitor-list-view .main-current-data {
+  padding: 8px 10px !important;
+  margin: 0;
+}
+
+
+
+#liveQuotesGrid.live-monitor-list-view .main-current-data .arial_26 {
+  font-size: 1.2rem;
+}
+
+
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child {
+  min-width: 0;
+  padding-top: 0 !important;
+}
+
+
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, .9fr);
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  
+}
+
+
+
+@media (max-width: 767px) {
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+    padding: 12px !important;
+  }
+
+  
+}
+
+
+
+/* Etiquetas y tarjetas compactas de fondos. */
+.fund-badge-card {
+  border-radius: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  transition: all .2s;
+}
+
+
+
+.fund-badge-card:hover {
+  border-color: #059669;
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.1);
+}
+
+
+
+/*
+     * Desgloses de fondos e histórico anual: áreas de desplazamiento propias.
+     * Se limita el crecimiento vertical de la página sin ocultar contenido.
+     */
+#fondosTopHoldingsGrid {
+  max-height: min(48vh, 420px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  align-content: start;
+  padding: 3px 7px 8px 3px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, .55) transparent;
+}
+
+
+
+#matricesAnualesContainer {
+  /* El scroll exterior solo debe comenzar después de que quepa una fila
+         completa de años. Cada tarjeta conserva su altura natural. */
+  max-height: min(86vh, 860px);
+  max-height: min(86dvh, 860px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  align-content: start;
+  align-items: start;
+  grid-auto-rows: max-content;
+  padding: 5px 9px 12px 4px;
+  scroll-padding-block: 10px;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, .55) transparent;
+}
+
+
+
+/* Evita que las tarjetas de una fila se estiren o recorten contenido. */
+#matricesAnualesContainer>[data-table-key^="matriz_"] {
+  min-width: 0;
+  height: max-content;
+  align-self: start;
+  scroll-margin-block: 8px;
+}
+
+
+
+#matricesAnualesContainer:focus-visible {
+  outline: 2px solid rgba(16, 185, 129, .65);
+  outline-offset: 2px;
+}
+
+
+
+#fondosTopHoldingsGrid::-webkit-scrollbar,
+#matricesAnualesContainer::-webkit-scrollbar {
+  width: 7px;
+}
+
+
+
+#fondosTopHoldingsGrid::-webkit-scrollbar-track,
+#matricesAnualesContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+
+#fondosTopHoldingsGrid::-webkit-scrollbar-thumb,
+#matricesAnualesContainer::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, .48);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+
+
+#fondosTopHoldingsGrid::-webkit-scrollbar-thumb:hover,
+#matricesAnualesContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, .72);
+  background-clip: padding-box;
+}
+
+
+
+/* Un único scroll vertical: el contenedor anual. Las doce filas de cada
+       tabla permanecen visibles dentro de su tarjeta, sin scroll anidado. */
+.matriz-tabla-scroll {
+  overflow: visible !important;
+  max-height: none !important;
+}
+
+
+
+#matricesAnualesContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+
+
+#matricesAnualesContainer::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, .48);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+
+
+#matricesAnualesContainer:hover::-webkit-scrollbar-thumb,
+#matricesAnualesContainer:focus-within::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, .78);
+  background-clip: padding-box;
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+  #matricesAnualesContainer {
+    scroll-behavior: auto;
+  }
+
+  
+}
+
+
+
+@media (max-width: 767px) {
+  #fondosTopHoldingsGrid {
+    max-height: min(48vh, 380px);
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 3px 4px 7px 2px;
+  }
+
+  
+
+  #matricesAnualesContainer {
+    max-height: min(86vh, 760px);
+    max-height: min(86dvh, 760px);
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-auto-rows: max-content;
+    padding: 4px 5px 9px 2px;
+  }
+
+  
+}
+
+
+
+/* Accesibilidad transversal: teclado visible, foco reconocible y anclas bajo la navegación fija. */
+html {
+  scroll-padding-top: 7.25rem;
+  scrollbar-gutter: stable;
+}
+
+
+
+.section-page {
+  scroll-margin-top: 7.25rem;
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid rgba(16, 185, 129, .82);
+  outline-offset: 2px;
+}
+
+
+
+button,
+input,
+select,
+textarea {
+  accent-color: #059669;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+  
+}
+
+
+
+.section-page {
+  display: none;
+}
+
+
+
+.section-page.active {
+  display: block;
+  animation: fadeIn .2s ease-out;
+}
+
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  
+}
+
+
+
+/* Colores semánticos para variaciones positivas y negativas. */
+.greenFont {
+  color: #059669 !important;
+}
+
+
+
+.dark .greenFont {
+  color: #10b981 !important;
+}
+
+
+
+.redFont {
+  color: #e11d48 !important;
+}
+
+
+
+.dark .redFont {
+  color: #f43f5e !important;
+}
+
+
+
+/* Parentheses pseudo-elements for change percent display */
+.parentheses::before {
+  content: "(";
+}
+
+
+
+.parentheses::after {
+  content: ")";
+}
+
+
+
+/* Arial-weight numeric display for quote cards */
+.arial_26 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+}
+
+
+
+.arial_20 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+}
+
+
+
+/* Quote card flash animation on refresh */
+/* Resaltado temporal cuando cambia una cotización en vivo. */
+.quote-card-flash {
+  animation: pulseFlash 1.2s ease-out;
+}
+
+
+
+@keyframes pulseFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+
+  
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+
+  
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+
+  
+}
+
+
+
+/* Drag & Drop styles */
+/* Estados visuales para ordenar las tarjetas de cotizaciones por arrastre. */
+.quote-card-draggable {
+  cursor: grab;
+}
+
+
+
+.quote-card-draggable:active {
+  cursor: grabbing;
+}
+
+
+
+.quote-card-dragging {
+  opacity: 0.45;
+  transform: scale(0.97);
+  border: 2px dashed rgba(99, 102, 241, 0.5) !important;
+}
+
+
+
+.quote-card-drag-over {
+  outline: 2px solid rgba(99, 102, 241, 0.7);
+  outline-offset: 2px;
+  background: rgba(99, 102, 241, 0.04) !important;
+}
+
+
+
+.drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+
+
+/* Account ordering tabs */
+/* Pestañas de ordenación de cuentas bancarias; no alteran los datos de las cuentas. */
+.banca-account-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--subtle-bg);
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform .15s, opacity .15s, border-color .15s, background .15s, box-shadow .15s;
+}
+
+
+
+.dark .banca-account-tab {
+  color: #cbd5e1;
+}
+
+
+
+.banca-account-tab:hover {
+  border-color: rgba(124, 58, 237, .35);
+  background: rgba(124, 58, 237, .06);
+}
+
+
+
+.banca-account-tab:active,
+.banca-account-tab.dragging {
+  cursor: grabbing;
+  opacity: .45;
+  transform: scale(.97);
+}
+
+
+
+.banca-account-tab.drag-over {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, .10);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, .12);
+}
+
+
+
+.banca-account-tab .banca-account-tab-grip {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+
+
+.banca-account-tab .banca-account-tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+
+
+.banca-account-tab .banca-account-tab-balance {
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+
+
+.dark .banca-account-tab .banca-account-tab-balance {
+  color: #94a3b8;
+}
+
+
+
+.banca-account-tab:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+
+
+/* Cabeceras fijas y estados de hover de las tablas tipo hoja de cálculo. */
+.table-sticky-header th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--panel-bg);
+}
+
+
+
+.excel-table tbody tr:hover td {
+  background-color: rgba(241, 245, 249, 0.7);
+}
+
+
+
+.dark .excel-table tbody tr:hover td {
+  background-color: rgba(30, 41, 59, 0.5);
+}
+
+
+
+/* Red line separator for year transitions (like Norwegian screenshot) */
+.year-separator-tr td {
+  border-top: 2px solid #ef4444 !important;
+}
+
+
+
+/* Table edit / locked state */
+/* Apariencia de solo lectura y celdas cuyo valor se calcula automáticamente. */
+.table-readonly .cell-input {
+  cursor: default;
+  opacity: .88;
+}
+
+
+
+.table-readonly .cell-input:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
+
+
+.table-calculated-cell {
+  position: relative;
+  cursor: not-allowed;
+}
+
+
+
+.table-calculated-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-family: Inter, sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #64748b;
+  background: rgba(148, 163, 184, .12);
+  border: 1px solid rgba(148, 163, 184, .18);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+
+
+/* Botón de edición: lectura discreta y edición activa claramente destacada. */
+.table-edit-toggle {
+  min-width: 84px;
+  min-height: 30px;
+  justify-content: center;
+  white-space: nowrap;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .07);
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+
+
+.table-edit-toggle:not(.is-editing):hover {
+  background: #eef2ff;
+  border-color: #818cf8;
+  color: #3730a3;
+  transform: translateY(-1px);
+}
+
+
+
+.table-edit-toggle.is-editing {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, .18), 0 1px 3px rgba(146, 64, 14, .12);
+}
+
+
+
+.table-edit-toggle.is-editing:hover {
+  background: #fde68a;
+  border-color: #d97706;
+}
+
+
+
+.table-edit-toggle:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, .55);
+  outline-offset: 2px;
+}
+
+
+
+.table-edit-toggle .edit-toggle-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+
+
+
+[data-edit-add-row]:disabled {
+  cursor: not-allowed !important;
+  opacity: .42 !important;
+  filter: grayscale(.35);
+  box-shadow: none !important;
+}
+
+
+
+[data-edit-add-row]:disabled:hover {
+  filter: grayscale(.35);
+  transform: none;
+}
+
+
+
+.table-edit-toggle.is-editing .edit-toggle-icon {
+  transform: scale(1.04);
+}
+
+
+
+.dark .table-edit-toggle {
+  background: #1e293b;
+  border-color: #475569;
+  color: #cbd5e1;
+}
+
+
+
+.dark .table-edit-toggle:not(.is-editing):hover {
+  background: #334155;
+  border-color: #818cf8;
+  color: #e0e7ff;
+}
+
+
+
+.dark .table-edit-toggle.is-editing {
+  background: rgba(245, 158, 11, .18);
+  border-color: #fbbf24;
+  color: #fcd34d;
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, .2), 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+
+
+.dark .table-edit-toggle.is-editing:hover {
+  background: rgba(245, 158, 11, .26);
+  border-color: #fcd34d;
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+  .table-edit-toggle {
+    transition: none;
+  }
+
+  
+
+  .table-edit-toggle:not(.is-editing):hover {
+    transform: none;
+  }
+
+  
+}
+
+
+
+/* Ajustes del área desplazable en móviles: mantener accesible el monitor sin ocupar toda la pantalla. */
+@media (max-width: 767px) {
+  #liveQuotesGrid {
+    max-height: min(48vh, 400px);
+    grid-template-columns: 1fr !important;
+    padding: 3px 4px 7px 2px;
+  }
+
+  
+}
+
+
+
+@media(max-width: 768px) {
+  body {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 12px)) !important;
+  }
+
+  
+}
+
+
+
+.backup-history-item {
+  transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+
+
+
+.backup-history-item.is-selected {
+  background: rgba(79, 70, 229, .08);
+  border-color: rgba(99, 102, 241, .35);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, .10);
+}
+
+
+
+.dark .backup-history-item.is-selected {
+  background: rgba(99, 102, 241, .13);
+  border-color: rgba(129, 140, 248, .35);
+}
+
+
+
+/* ── ECONEXO fund chart: theme-aware, responsive and consistent with the app ── */
+#fundChartModal {
+  --fund-chart-bg: #ffffff;
+  --fund-chart-panel: #ffffff;
+  --fund-chart-soft: #f8fafc;
+  --fund-chart-text: #0f172a;
+  --fund-chart-muted: #64748b;
+  --fund-chart-border: #e2e8f0;
+  --fund-chart-grid: rgba(148, 163, 184, .20);
+  --fund-chart-accent: #059669;
+  --fund-chart-accent-strong: #047857;
+  --fund-chart-accent-soft: rgba(5, 150, 105, .10);
+  --fund-chart-accent-border: rgba(5, 150, 105, .30);
+  --fund-chart-line: #059669;
+  --fund-chart-fill-top: rgba(16, 185, 129, .23);
+  --fund-chart-fill-bottom: rgba(16, 185, 129, .015);
+  --fund-chart-overlay: rgba(255, 255, 255, .90);
+  --fund-chart-tooltip-bg: #0f172a;
+  --fund-chart-tooltip-text: #f8fafc;
+  --fund-chart-price-line: #64748b;
+  --fund-chart-price-tag: #047857;
+  --fund-chart-price-tag-text: #ffffff;
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: none;
+  color-scheme: light;
+  background: rgba(2, 6, 23, .72);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+}
+
+
+
+.dark #fundChartModal {
+  --fund-chart-bg: #090e17;
+  --fund-chart-panel: #0f172a;
+  --fund-chart-soft: #111c2e;
+  --fund-chart-text: #f1f5f9;
+  --fund-chart-muted: #94a3b8;
+  --fund-chart-border: #263449;
+  --fund-chart-grid: rgba(148, 163, 184, .16);
+  --fund-chart-accent: #34d399;
+  --fund-chart-accent-strong: #6ee7b7;
+  --fund-chart-accent-soft: rgba(16, 185, 129, .13);
+  --fund-chart-accent-border: rgba(52, 211, 153, .30);
+  --fund-chart-line: #34d399;
+  --fund-chart-fill-top: rgba(52, 211, 153, .22);
+  --fund-chart-fill-bottom: rgba(52, 211, 153, .015);
+  --fund-chart-overlay: rgba(15, 23, 42, .92);
+  --fund-chart-tooltip-bg: #e2e8f0;
+  --fund-chart-tooltip-text: #0f172a;
+  --fund-chart-price-line: #94a3b8;
+  --fund-chart-price-tag: #047857;
+  --fund-chart-price-tag-text: #ffffff;
+  color-scheme: dark;
+}
+
+
+
+#fundChartModal.is-open {
+  display: flex;
+}
+
+#fundChartModal[aria-hidden="true"] {
+  display: none;
+}
+
+.fund-chart-shell {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--fund-chart-bg);
+  color: var(--fund-chart-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+
+
+.fund-chart-topbar {
+  min-height: 48px;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 clamp(12px, 2vw, 24px);
+  border-bottom: 1px solid var(--fund-chart-border);
+  background: var(--fund-chart-panel);
+}
+
+
+
+.fund-chart-brandline {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--fund-chart-accent-strong);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .085em;
+  text-transform: uppercase;
+}
+
+
+
+.fund-chart-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: var(--fund-chart-accent);
+  box-shadow: 0 0 0 4px var(--fund-chart-accent-soft);
+}
+
+
+
+.fund-chart-icon-btn {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: var(--fund-chart-muted);
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color .15s, background .15s, border-color .15s;
+}
+
+
+
+.fund-chart-icon-btn:hover {
+  color: var(--fund-chart-accent-strong);
+  background: var(--fund-chart-accent-soft);
+  border-color: var(--fund-chart-accent-border);
+}
+
+.fund-chart-icon-btn:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.fund-chart-heading {
+  flex: 0 0 auto;
+  padding: clamp(14px, 2vw, 24px) clamp(14px, 2.2vw, 28px) 12px;
+  background: var(--fund-chart-panel);
+}
+
+
+
+.fund-chart-title {
+  color: var(--fund-chart-text);
+  font-size: clamp(20px, 2.35vw, 32px);
+  line-height: 1.18;
+  font-weight: 700;
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+
+
+
+.fund-chart-quote-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 14px;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+
+
+.fund-chart-direction {
+  font-size: 17px;
+  color: var(--fund-chart-accent);
+  font-weight: 900;
+}
+
+.fund-chart-last {
+  color: var(--fund-chart-text);
+  font-size: clamp(24px, 2.4vw, 34px);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -.035em;
+}
+
+.fund-chart-change {
+  color: var(--fund-chart-accent-strong);
+  font-size: clamp(13px, 1.45vw, 18px);
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.fund-chart-change.is-negative,
+.fund-chart-direction.is-negative {
+  color: #dc4545;
+}
+
+.dark .fund-chart-change.is-negative,
+.dark .fund-chart-direction.is-negative {
+  color: #fb7185;
+}
+
+.fund-chart-subtitle {
+  margin-top: 7px;
+  color: var(--fund-chart-muted);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: .01em;
+  overflow-wrap: anywhere;
+}
+
+.fund-chart-subtitle.is-warning {
+  color: #b45309;
+}
+
+.dark .fund-chart-subtitle.is-warning {
+  color: #fbbf24;
+}
+
+.fund-chart-canvas-wrap {
+  flex: 1 1 360px;
+  min-height: 160px;
+  min-width: 0;
+  margin: 0 clamp(10px, 1.5vw, 20px);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--fund-chart-border);
+  border-radius: 14px;
+  background: var(--fund-chart-bg);
+}
+
+
+
+#fundChartCanvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.fund-chart-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--fund-chart-muted);
+  background: var(--fund-chart-overlay);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  z-index: 3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+
+.fund-chart-loading.hidden,
+.fund-chart-empty.hidden {
+  display: none !important;
+}
+
+.fund-chart-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px;
+  text-align: center;
+  color: var(--fund-chart-muted);
+  background: var(--fund-chart-overlay);
+  font-size: 12px;
+}
+
+
+
+.fund-chart-empty>i {
+  color: var(--fund-chart-accent);
+}
+
+.fund-chart-empty strong {
+  color: var(--fund-chart-text);
+  font-size: 14px;
+}
+
+.fund-chart-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  padding: 8px 12px;
+  border: 1px solid var(--fund-chart-border);
+  border-radius: 9px;
+  color: var(--fund-chart-accent-strong);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--fund-chart-panel);
+  transition: background .15s, border-color .15s;
+}
+
+
+
+.fund-chart-source-link:hover {
+  background: var(--fund-chart-accent-soft);
+  border-color: var(--fund-chart-accent-border);
+}
+
+.fund-chart-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  margin: 12px clamp(10px, 1.5vw, 20px) 14px;
+  padding: 6px;
+  border: 1px solid var(--fund-chart-border);
+  border-radius: 12px;
+  background: var(--fund-chart-soft);
+}
+
+
+
+.fund-chart-range {
+  flex: 1 1 0;
+  min-width: 58px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--fund-chart-muted);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.1;
+  font-weight: 650;
+  white-space: nowrap;
+  text-align: center;
+  background: transparent;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s, box-shadow .15s;
+}
+
+
+
+.fund-chart-range:hover {
+  background: var(--fund-chart-panel);
+  color: var(--fund-chart-accent-strong);
+  border-color: var(--fund-chart-border);
+}
+
+.fund-chart-range.active,
+.fund-chart-range[aria-pressed="true"] {
+  background: var(--fund-chart-accent-soft);
+  color: var(--fund-chart-accent-strong);
+  border-color: var(--fund-chart-accent-border);
+  box-shadow: inset 0 0 0 1px rgba(5, 150, 105, .035);
+  font-weight: 800;
+}
+
+
+
+.fund-chart-range:focus-visible,
+.fund-chart-icon-btn:focus-visible,
+.fund-chart-source-link:focus-visible {
+  outline: 2px solid var(--fund-chart-accent);
+  outline-offset: 2px;
+}
+
+
+
+@media (max-width: 700px) {
+  .fund-chart-topbar {
+    padding: 0 10px;
+  }
+
+  .fund-chart-brandline {
+    font-size: 9px;
+    letter-spacing: .055em;
+  }
+
+  .fund-chart-heading {
+    padding: 13px 12px 10px;
+  }
+
+  .fund-chart-title {
+    font-size: clamp(18px, 5vw, 25px);
+  }
+
+  .fund-chart-canvas-wrap {
+    margin: 0 8px;
+    border-radius: 10px;
+  }
+
+  .fund-chart-ranges {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+    margin: 10px 8px 9px;
+    padding: 5px;
+  }
+
+  .fund-chart-range {
+    min-width: 0;
+    padding: 8px 3px;
+    font-size: 11px;
+  }
+
+  .fund-chart-quote-line {
+    gap: 5px 9px;
+  }
+
+  .fund-chart-subtitle {
+    font-size: 9px;
+  }
+}
+
+
+
+@media (max-height: 560px) and (min-width: 701px) {
+  .fund-chart-topbar {
+    min-height: 42px;
+    flex-basis: 42px;
+  }
+
+  .fund-chart-heading {
+    padding-top: 10px;
+    padding-bottom: 7px;
+  }
+
+  .fund-chart-title {
+    font-size: clamp(18px, 2vw, 26px);
+  }
+
+  .fund-chart-last {
+    font-size: 24px;
+  }
+
+  .fund-chart-ranges {
+    margin-top: 7px;
+    margin-bottom: 8px;
+    padding: 4px;
+  }
+
+  .fund-chart-range {
+    min-height: 30px;
+    padding: 5px 8px;
+  }
+}
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  .fund-chart-icon-btn,
+  .fund-chart-range,
+  .fund-chart-source-link {
+    transition: none;
+  }
+}
+
+
+
+
+/* Export dropdown v2.1.8: trigger is a real button using the exact same classes as btnImportWS. */
+#exportBackupDropdown {
+  position: relative;
+}
+
+#exportBackupMenu {
+  min-width: 18rem;
+}
+
+#exportBackupMenu[hidden] {
+  display: none !important;
+}
+
+#exportBackupMenu:not([hidden]) {
+  display: block !important;
+}
+
+@media (max-width: 420px) {
+  #exportBackupMenu {
+    right: -46px;
+    width: min(18rem, calc(100vw - 18px));
+    min-width: 0;
+  }
+}
+
+
+/* ── ECONEXO branded encrypted-backup password modal ─────────────────────── */
+#backupPasswordModal {
+  display: none;
+}
+
+#backupPasswordModal.flex {
+  display: flex !important;
+}
+
+#backupPasswordModal .backup-password-panel {
+  animation: backupPasswordPanelIn .18s ease-out;
+  transform-origin: center;
+}
+
+#backupPasswordModal #backupPasswordFeedback {
+  display: flex;
+}
+
+#backupPasswordModal #backupPasswordFeedback.hidden {
+  display: none !important;
+}
+
+#backupPasswordModal input::-ms-reveal,
+#backupPasswordModal input::-ms-clear {
+  display: none;
+}
+
+#backupPasswordModal button:focus-visible,
+#backupPasswordModal input:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, .75);
+  outline-offset: 2px;
+}
+
+@keyframes backupPasswordPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(7px) scale(.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #backupPasswordModal .backup-password-panel {
+    animation: none;
+  }
+}
+
+
+/* ========================================================================
+   ECONEXO 2.2.0 — monitor de fondos compacto
+   Objetivo: mostrar los cinco primeros fondos sin scroll interno. El monitor
+   solo limita su altura cuando existen más de cinco fondos.
+   ======================================================================== */
+#liveMonitorCard {
+  padding: 12px !important;
+}
+
+#liveMonitorCard> :not([hidden])~ :not([hidden]) {
+  margin-top: 10px !important;
+}
+
+#liveMonitorCard>div:first-child {
+  padding-bottom: 8px !important;
+}
+
+#liveQuotesGrid {
+  max-height: none !important;
+  overflow: visible !important;
+  gap: 8px !important;
+  padding: 2px !important;
+  align-content: start !important;
+  scrollbar-gutter: auto !important;
+}
+
+#liveQuotesGrid.has-more-than-five {
+  max-height: min(55vh, 410px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable !important;
+}
+
+#liveQuotesGrid.has-more-than-five.live-monitor-list-view {
+  max-height: min(70vh, 460px) !important;
+}
+
+/* Vista tarjetas: menos padding y menos espacio vertical sin perder información. */
+#liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable {
+  min-width: 0;
+  min-height: 0;
+  padding: 10px !important;
+  gap: 5px !important;
+  row-gap: 5px !important;
+  border-radius: 14px !important;
+  contain-intrinsic-size: auto 150px !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable> :not([hidden])~ :not([hidden]) {
+  margin-top: 5px !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .main-current-data {
+  padding: 7px 8px !important;
+  border-radius: 10px !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .main-current-data .arial_26 {
+  font-size: clamp(1.05rem, 1.25vw, 1.3rem) !important;
+  line-height: 1.1 !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .main-current-data .arial_20 {
+  line-height: 1.1 !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .main-current-data .text-\[9px\] {
+  margin-bottom: 1px !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .quote-card-draggable a {
+  max-width: 100% !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .quote-card-draggable .drag-handle {
+  flex-shrink: 0;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .quote-card-draggable button[title="Ver gráfica del fondo"] {
+  padding: 4px 7px !important;
+  font-size: 10px !important;
+}
+
+#liveQuotesGrid:not(.live-monitor-list-view) .quote-card-draggable .flex.items-center.space-x-0\.5 button {
+  padding: 4px !important;
+}
+
+/* Vista listado: cada fondo ocupa una fila de unos 60–70 px en escritorio. */
+#liveQuotesGrid.live-monitor-list-view {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.15fr) minmax(190px, .9fr) minmax(145px, .65fr) !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+  row-gap: 0 !important;
+  padding: 7px 10px !important;
+  min-height: 62px !important;
+  border-radius: 12px !important;
+  flex: 0 0 auto !important;
+  contain-intrinsic-size: auto 66px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable> :not([hidden])~ :not([hidden]) {
+  margin-top: 0 !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child {
+  min-width: 0 !important;
+  align-items: center;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child .flex.items-center.gap-1\.5.mb-0\.5 {
+  margin-bottom: 1px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child a {
+  max-width: 100% !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child .ml-5 {
+  margin-left: 18px !important;
+  gap: 4px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child .ml-5 span {
+  line-height: 1.15 !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view .main-current-data {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 5px 8px !important;
+  border-radius: 9px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view .main-current-data>.flex {
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view .main-current-data .arial_26 {
+  font-size: 1.1rem !important;
+  line-height: 1.05 !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view .main-current-data .arial_20 {
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view .main-current-data .text-\[9px\] {
+  font-size: 8px !important;
+  margin-bottom: 1px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child {
+  min-width: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 7px !important;
+  font-size: 10px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child>span {
+  max-width: 100% !important;
+  font-size: 9px !important;
+}
+
+#liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child button {
+  flex-shrink: 0 !important;
+  padding: 4px 7px !important;
+  white-space: nowrap !important;
+  font-size: 10px !important;
+}
+
+/* En pantallas anchas caben cinco tarjetas en una sola fila. */
+@media (min-width: 1440px) {
+  #liveQuotesGrid:not(.live-monitor-list-view) {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  
+}
+
+@media (min-width: 1100px) and (max-width: 1439px) {
+  #liveQuotesGrid:not(.live-monitor-list-view) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  #liveQuotesGrid:not(.live-monitor-list-view) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable {
+    grid-template-columns: minmax(0, 1fr) minmax(170px, .85fr) minmax(125px, .65fr) !important;
+    column-gap: 7px !important;
+    padding: 7px 8px !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child>span {
+    display: none !important;
+  }
+
+  
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  #liveQuotesGrid:not(.live-monitor-list-view) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable {
+    padding: 8px !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 4px 8px !important;
+    padding: 7px 8px !important;
+    min-height: 66px !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child {
+    grid-column: 1 / -1 !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>.main-current-data {
+    grid-column: 1 !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child {
+    grid-column: 2 !important;
+  }
+
+  
+}
+
+@media (max-width: 479px) {
+
+  /* La tarjeta móvil se convierte en una fila compacta: nombre + precio y pie. */
+  #liveQuotesGrid:not(.live-monitor-list-view) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 5px !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(112px, .78fr) !important;
+    grid-template-rows: auto auto !important;
+    align-items: center !important;
+    gap: 4px 7px !important;
+    padding: 7px 8px !important;
+    border-radius: 12px !important;
+    min-height: 0 !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable> :not([hidden])~ :not([hidden]) {
+    margin-top: 0 !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable>div:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable>.main-current-data {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    padding: 5px !important;
+    width: 100% !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable>div:last-child {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view) .main-current-data>.flex {
+    align-items: center !important;
+    gap: 3px !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view) .main-current-data .arial_26 {
+    font-size: 1rem !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view) .main-current-data .arial_20 {
+    font-size: 10px !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view) .main-current-data .text-\[9px\] {
+    display: none !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view) .main-current-data .flex.items-center.justify-center.w-5 {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  
+
+  #liveQuotesGrid:not(.live-monitor-list-view)>.quote-card-draggable>div:last-child>span {
+    max-width: 58% !important;
+    font-size: 9px !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 4px 8px !important;
+    padding: 7px 8px !important;
+    min-height: 65px !important;
+    contain-intrinsic-size: auto 68px !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable> :not([hidden])~ :not([hidden]) {
+    margin-top: 0 !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:first-child {
+    grid-column: 1 / -1 !important;
+    grid-row: 1 !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>.main-current-data {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    padding: 4px 6px !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-content: flex-end !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child>span {
+    display: none !important;
+  }
+
+  
+
+  #liveQuotesGrid.live-monitor-list-view>.quote-card-draggable>div:last-child button {
+    padding: 4px 6px !important;
+  }
+
+  
+
+  #liveQuotesGrid.has-more-than-five:not(.live-monitor-list-view) {
+    max-height: min(60vh, 460px) !important;
+  }
+
+  
+}
+
+/* ── DATE RANGE PICKER ────────────────────────────────────────────────────────
+   Desplegable de selección de rango de fechas con calendario mensual.          */
+
+.date-range-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.date-range-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  height: 28px;
+  line-height: 1;
+}
+
+.date-range-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.dark .date-range-btn:hover {
+  background: #1e293b;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+.date-range-btn.drp-active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.dark .date-range-btn.drp-active {
+  background: rgba(59, 130, 246, .15);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.date-range-btn .drp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #3b82f6;
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  line-height: 1;
+}
+
+.date-range-btn .drp-clear-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  color: #94a3b8;
+  transition: all .12s;
+}
+
+.date-range-btn .drp-clear-inline:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.date-range-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 9999;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .14), 0 2px 8px rgba(0, 0, 0, .08);
+  padding: 12px;
+  width: 280px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  animation: drpFadeIn .15s ease;
+}
+
+.date-range-dropdown.drp-open {
+  display: flex;
+}
+
+@keyframes drpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header: mes y navegación */
+.drp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.drp-nav-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+
+.drp-nav-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.dark .drp-nav-btn:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.drp-month-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  flex: 1;
+  text-align: center;
+  user-select: none;
+}
+
+.dark .drp-month-label {
+  color: #f1f5f9;
+}
+
+/* Grid del calendario */
+.drp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.drp-day-name {
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  color: #94a3b8;
+  padding: 2px 0 4px;
+  text-transform: uppercase;
+}
+
+.drp-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #334155;
+  transition: background .1s, color .1s;
+  user-select: none;
+  font-weight: 500;
+}
+
+.dark .drp-day {
+  color: #cbd5e1;
+}
+
+.drp-day:hover:not(.drp-empty):not(.drp-disabled) {
+  background: #e2e8f0;
+}
+
+.dark .drp-day:hover:not(.drp-empty):not(.drp-disabled) {
+  background: #334155;
+}
+
+.drp-day.drp-empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.drp-day.drp-disabled {
+  color: #cbd5e1;
+  cursor: default;
+  opacity: 0.35;
+}
+
+.dark .drp-day.drp-disabled {
+  color: #475569;
+}
+
+.drp-day.drp-today {
+  font-weight: 800;
+  color: #2563eb;
+  position: relative;
+}
+
+.dark .drp-day.drp-today {
+  color: #60a5fa;
+}
+
+.drp-day.drp-selected-start,
+.drp-day.drp-selected-end {
+  background: #2563eb !important;
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.drp-day.drp-in-range {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-radius: 0;
+}
+
+.dark .drp-day.drp-in-range {
+  background: rgba(59, 130, 246, .22);
+  color: #93c5fd;
+  border-radius: 0;
+}
+
+.drp-day.drp-selected-start {
+  border-radius: 6px 0 0 6px;
+}
+
+.drp-day.drp-selected-end {
+  border-radius: 0 6px 6px 0;
+}
+
+.drp-day.drp-selected-start.drp-selected-end {
+  border-radius: 6px;
+}
+
+/* Inputs de rango manual */
+.drp-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.drp-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.drp-input-group label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: .04em;
+}
+
+.drp-input-group input {
+  width: 100%;
+  font-size: 11px;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card-bg);
+  color: #1e293b;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color .12s;
+  box-sizing: border-box;
+}
+
+.dark .drp-input-group input {
+  color: #f1f5f9;
+}
+
+.drp-input-group input:focus {
+  border-color: #3b82f6;
+}
+
+/* Presets rápidos */
+.drp-presets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.drp-preset {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all .12s;
+}
+
+.drp-preset:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.dark .drp-preset:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.drp-preset.drp-preset-active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+.dark .drp-preset.drp-preset-active {
+  background: rgba(59, 130, 246, .15);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+/* Botones de acción */
+.drp-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.drp-btn {
+  padding: 4px 11px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .12s;
+}
+
+.drp-btn-clear {
+  background: transparent;
+  border-color: var(--border);
+  color: #64748b;
+}
+
+.drp-btn-clear:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.dark .drp-btn-clear:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.drp-btn-apply {
+  background: #2563eb;
+  color: #fff;
+}
+
+.drp-btn-apply:hover {
+  background: #1d4ed8;
+}
