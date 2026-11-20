@@ -21,8 +21,51 @@ const BROWSER_ARGS = [
   '--disable-dev-shm-usage',
   '--disable-blink-features=AutomationControlled',
   '--no-first-run',
-  '--window-size=1440,900'
+  '--window-size=1440,900',
+  '--disable-gpu',
+  '--disable-software-rasterizer',
+  '--disable-extensions',
+  '--disable-component-update',
+  '--disable-background-networking',
+  '--disable-background-timer-throttling',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-renderer-backgrounding',
+  '--disable-sync',
+  '--mute-audio',
+  '--no-default-browser-check'
 ];
+
+const AD_TRACKER_PATTERNS = [
+  'google-analytics.com',
+  'googletagmanager.com',
+  'googlesyndication.com',
+  'doubleclick.net',
+  'adservice.google.',
+  'adnxs.com',
+  'amazon-adsystem.com',
+  'criteo.com',
+  'criteo.net',
+  'taboola.com',
+  'outbrain.com',
+  'pubmatic.com',
+  'rubiconproject.com',
+  'scorecardresearch.com',
+  'teads.tv',
+  'smartadserver.com',
+  'casalemedia.com',
+  'moatads.com',
+  'chartbeat.com',
+  'hotjar.com',
+  'facebook.net',
+  'connect.facebook.net',
+  'clarity.ms'
+];
+
+function isTrackerOrAd(url) {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return AD_TRACKER_PATTERNS.some((p) => lower.includes(p));
+}
 
 let browserPromise = null;
 
@@ -78,10 +121,14 @@ async function createOptimizedPage(browser, { allowStylesheets = false } = {}) {
   page.setDefaultNavigationTimeout(45000);
   page.setDefaultTimeout(8000);
 
-  // No bloqueamos scripts, fetch/XHR ni websockets: son necesarios para las cotizaciones.
-  // PUPPETEER_BLOCK_RESOURCES permite cambiar la lista si Investing modifica su página.
+  // Intercepción optimizada: bloqueamos trackers, analíticas pesadas y recursos innecesarios
   await page.setRequestInterception(true);
   page.on('request', (request) => {
+    const url = request.url();
+    if (isTrackerOrAd(url)) {
+      request.abort().catch(() => {});
+      return;
+    }
     const blockedByType = BLOCKED_RESOURCE_TYPES.has(request.resourceType());
     const shouldBlock = blockedByType && !(allowStylesheets && request.resourceType() === 'stylesheet');
     const action = shouldBlock ? request.abort() : request.continue();

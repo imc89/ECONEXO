@@ -11,7 +11,9 @@ app.use((req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.s
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
 app.use((req,res,next)=>{ if (/\.(?:html?|js|css)$/i.test(req.path)) res.setHeader('Cache-Control','no-store, max-age=0, must-revalidate'); next(); });
 app.use(express.static(PUBLIC_DIR,{etag:false,maxAge:0}));
-const MAX_CONCURRENT=2, MAX_JOB_AGE_MS=15*60*1000, jobs=new Map();
+const MAX_CONCURRENT = process.env.PUPPETEER_CONCURRENCY ? parseInt(process.env.PUPPETEER_CONCURRENCY, 10) : 1;
+const MAX_JOB_AGE_MS = 15 * 60 * 1000;
+const jobs = new Map();
 const cleanQuery=v=>typeof v==='string'?v.trim():'';
 const uniqueQueries=qs=>[...new Set((Array.isArray(qs)?qs:[]).map(cleanQuery).filter(Boolean))];
 function createJob(queries){const id=randomUUID();const job={id,status:'queued',createdAt:Date.now(),startedAt:null,finishedAt:null,total:queries.length,processed:0,updated:0,failed:0,currentQuery:'',results:[],error:null};jobs.set(id,job);processQuoteJob(job,queries).catch(err=>{job.status='failed';job.error=err?.message||'Error procesando el lote.';job.finishedAt=Date.now();});return job;}
