@@ -822,6 +822,9 @@ export async function scrapeInvestingFund(query, options = {}) {
   }
 }
 
+// Caché en memoria para evitar repetir búsquedas de ISIN a URL en el servidor
+const ISIN_URL_CACHE = new Map();
+
 /**
  * Fast quote-only scrape: resolves ISIN/URL → fund page → live DOM data.
  * Skips timeseries interception and historical data. ~2× faster.
@@ -837,16 +840,19 @@ export async function scrapeInvestingQuoteOnly(query) {
     page = await createOptimizedPage(browser);
 
     let targetUrl = '';
+    const upperQuery = trimmed.toUpperCase();
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
       // Use as-is, strip any -chart suffix
       targetUrl = trimmed.replace(/-chart$/, '').replace(/\/$/, '');
+    } else if (ISIN_URL_CACHE.has(upperQuery)) {
+      targetUrl = ISIN_URL_CACHE.get(upperQuery);
     } else {
       const isIsin = /^[A-Z]{2}[A-Z0-9]{9}[0-9]$/i.test(trimmed);
       let resolved = false;
 
       // Try autocomplete API first (fast, accurate for ISINs)
       try {
-        await page.goto('https://es.investing.com', { waitUntil: 'domcontentloaded', timeout: 20000 });
+        await page.goto('https://es.investing.com', { waitUntil: 'domcontentloaded', timeout: 25000 });
         const apiResult = await page.evaluate(async (q) => {
           const res = await fetch('https://es.investing.com/search/service/searchTopBar', {
             method: 'POST',
@@ -867,8 +873,8 @@ export async function scrapeInvestingQuoteOnly(query) {
           if (hit) {
             const raw = hit.link || hit.url || '';
             const abs = raw.startsWith('http') ? raw : `https://es.investing.com${raw}`;
-            // Strip any -chart suffix — use clean fund URL
             targetUrl = abs.replace(/-chart$/, '').replace(/\/$/, '');
+            ISIN_URL_CACHE.set(upperQuery, targetUrl);
             resolved = true;
           }
         }
@@ -876,8 +882,8 @@ export async function scrapeInvestingQuoteOnly(query) {
 
       if (!resolved) {
         // Fallback: search page
-        await page.goto(`https://es.investing.com/search/?q=${encodeURIComponent(trimmed)}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await waitForFundSearchResults(page, 5000);
+        await page.goto(`https://es.investing.com/search/?q=${encodeURIComponent(trimmed)}`, { waitUntil: 'domcontentloaded', timeout: 35000 });
+        await waitForFundSearchResults(page, 7000);
         const isinUpper = trimmed.toUpperCase();
         const link = await page.evaluate((isin, isIsinFlag) => {
           const all = Array.from(document.querySelectorAll('a[href*="/funds/"]')).filter(a => {
@@ -896,26 +902,49 @@ export async function scrapeInvestingQuoteOnly(query) {
         if (link) {
           targetUrl = link.replace(/-chart$/, '').replace(/\/$/, '');
           if (!targetUrl.startsWith('http')) targetUrl = `https://es.investing.com${targetUrl}`;
+          ISIN_URL_CACHE.set(upperQuery, targetUrl);
         } else {
           targetUrl = `https://es.investing.com/funds/${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
         }
       }
     }
 
-    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 40000 });
-    await waitForFundQuote(page, 7500);
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await waitForFundQuote(page, 12000);
 
     const domInfo = await page.evaluate(() => {
       const h1 = document.querySelector('h1')?.innerText?.trim() || '';
       const mainContainer = document.querySelector('.main-current-data') || document;
 
-      const lastEl = mainContainer.querySelector('#last_last') ||
-                     mainContainer.querySelector('[class*="-last"]') ||
-                     document.querySelector('#last_last');
-      const changeEl = mainContainer.querySelector('span[class*="-pc"]:not([class*="-pcp"])') ||
-                       document.querySelector('span[class*="-pc"]:not([class*="-pcp"])');
-      const changePcpEl = mainContainer.querySelector('span[class*="-pcp"]') ||
-                          document.querySelector('span[class*="-pcp"]');
+      // Extract PID if available
+      const pidEl = document.querySelector('[data-pair-id]') ||
+                    document.querySelector('[data-pid]') ||
+                    mainContainer.querySelector('[data-pair-id]');
+      const pid = pidEl ? (pidEl.getAttribute('data-pair-id') || pidEl.getAttribute('data-pid')) : null;
+
+      let lastEl = pid ? (document.querySelector(`.pid-${pid}-last`) || document.querySelector(`#last_last`)) : null;
+      let changeEl = pid ? document.querySelector(`.pid-${pid}-pc`) : null;
+      let changePcpEl = pid ? document.querySelector(`.pid-${pid}-pcp`) : null;
+
+      if (!lastEl) {
+        lastEl = mainContainer.querySelector('[data-test="instrument-price-last"]') ||
+                 document.querySelector('[data-test="instrument-price-last"]') ||
+                 mainContainer.querySelector('#last_last') ||
+                 mainContainer.querySelector('[class*="-last"]') ||
+                 document.querySelector('#last_last');
+      }
+      if (!changeEl) {
+        changeEl = mainContainer.querySelector('[data-test="instrument-price-change"]') ||
+                   document.querySelector('[data-test="instrument-price-change"]') ||
+                   mainContainer.querySelector('span[class*="-pc"]:not([class*="-pcp"])') ||
+                   document.querySelector('span[class*="-pc"]:not([class*="-pcp"])');
+      }
+      if (!changePcpEl) {
+        changePcpEl = mainContainer.querySelector('[data-test="instrument-price-change-percent"]') ||
+                      document.querySelector('[data-test="instrument-price-change-percent"]') ||
+                      mainContainer.querySelector('span[class*="-pcp"]') ||
+                      document.querySelector('span[class*="-pcp"]');
+      }
 
       const lastVal = lastEl?.innerText?.trim() || '';
       const changeVal = changeEl?.innerText?.trim() || '';
@@ -923,11 +952,12 @@ export async function scrapeInvestingQuoteOnly(query) {
 
       const hasUp = changeVal.startsWith('+') || changePcpVal.startsWith('+');
       const direction = hasUp ? 'up' : 'down';
-      const isGreen = !!(changeEl?.className?.includes('greenFont') || direction === 'up');
+      const isGreen = !!(changeEl?.className?.includes('greenFont') || changePcpEl?.className?.includes('greenFont') || direction === 'up');
 
       const pageText = document.body.innerText || '';
       let currency = 'EUR';
-      if (pageText.includes('USD') && !pageText.includes('EUR')) currency = 'USD';
+      const currencyMatch = pageText.match(/\b(EUR|USD|GBP|JPY|CHF)\b/);
+      if (currencyMatch) currency = currencyMatch[1];
       const isinMatch = pageText.match(/\b([A-Z]{2}[A-Z0-9]{9}[0-9])\b/);
 
       return { h1, lastVal, changeVal, changePcpVal, direction, isGreen, currency, isin: isinMatch ? isinMatch[1] : '' };
@@ -935,6 +965,11 @@ export async function scrapeInvestingQuoteOnly(query) {
 
     let fundTitle = domInfo.h1 || 'Fondo de Inversión';
     fundTitle = fundTitle.replace(/^Gráfico\s+/i, '').trim();
+
+    // Guardar URL en caché si pudimos resolverla con éxito
+    if (domInfo.isin) {
+      ISIN_URL_CACHE.set(domInfo.isin.toUpperCase(), targetUrl);
+    }
 
     return {
       success: true,
