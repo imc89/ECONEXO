@@ -6,6 +6,15 @@ const { pathToFileURL } = require('url');
 const net = require('net');
 const http = require('http');
 
+// ─── Configurar nombre y rutas de datos en MAYÚSCULAS (ECONEXO) ───────────────
+app.name = 'ECONEXO';
+try {
+  const appData = app.getPath('appData'); // ~/Library/Application Support en macOS
+  app.setPath('userData', path.join(appData, 'ECONEXO'));
+} catch (e) {
+  console.warn('[Electron] No se pudo fijar userData personalizada:', e);
+}
+
 // ─── Mantener una sola instancia de la app ───────────────────────────────────
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {

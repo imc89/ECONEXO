@@ -62,7 +62,7 @@
           ]
         }
       ],
-      "icon": "electron/assets/icon-512.png",
+      "icon": "electron/assets/icon.icns",
       "category": "public.app-category.finance",
       "darkModeSupport": true,
       "hardenedRuntime": true,
