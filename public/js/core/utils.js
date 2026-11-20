@@ -47,6 +47,8 @@
       return yearMatch ? yearMatch[1] : null;
     }
 
+    const DEFAULT_REMOTE_API = 'https://econexo-backend-9yjv.onrender.com';
+
     /**
      * Resuelve la URL completa para llamadas a endpoints de la API (/api/...).
      * Permite conectar un backend remoto (Render, Railway o localhost) cuando
@@ -58,6 +60,9 @@
       try { custom = (localStorage.getItem('econexo_api_url') || '').trim(); } catch (_) {}
       if (custom) {
         return `${custom.replace(/\/+$/, '')}${cleanEndpoint}`;
+      }
+      if (typeof window !== 'undefined' && window.location && window.location.hostname && !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        return `${DEFAULT_REMOTE_API}${cleanEndpoint}`;
       }
       return cleanEndpoint;
     }

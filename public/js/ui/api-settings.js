@@ -3,13 +3,18 @@
 
 (function () {
   const STORAGE_KEY = 'econexo_api_url';
+  const DEFAULT_REMOTE_API = 'https://econexo-backend-9yjv.onrender.com';
+
+  function isLocalHost() {
+    return typeof window !== 'undefined' && window.location && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  }
 
   function getStoredApiUrl() {
     try {
-      return (localStorage.getItem(STORAGE_KEY) || '').trim();
-    } catch (_) {
-      return '';
-    }
+      const stored = (localStorage.getItem(STORAGE_KEY) || '').trim();
+      if (stored) return stored;
+    } catch (_) {}
+    return isLocalHost() ? '' : DEFAULT_REMOTE_API;
   }
 
   function setStoredApiUrl(url) {
@@ -28,7 +33,7 @@
     const endpoint = base ? `${base}/api/health` : '/api/health';
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
+    const timeoutId = setTimeout(() => controller.abort(), 35000);
 
     try {
       const res = await fetch(endpoint, {
@@ -42,7 +47,7 @@
       return { ok: true, data };
     } catch (err) {
       clearTimeout(timeoutId);
-      return { ok: false, error: err.name === 'AbortError' ? 'Tiempo de espera agotado' : (err.message || 'Error de conexión') };
+      return { ok: false, error: err.name === 'AbortError' ? 'Tiempo de espera agotado (Render puede estar arrancando el contenedor)' : (err.message || 'Error de conexión') };
     }
   }
 
