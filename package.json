@@ -106,7 +106,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ECONEXO"
+      "shortcutName": "ECONEXO",
+      "deleteAppDataOnUninstall": true
     }
   },
   "dependencies": {
