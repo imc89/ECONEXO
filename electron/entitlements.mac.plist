@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- Permite ejecutar código heredado sin firma (necesario para Chromium de Puppeteer) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!-- Acceso a la red para scraping de Investing.com -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <!-- Permite que procesos hijos (Chromium) accedan a la red -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+  </dict>
+</plist>

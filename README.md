@@ -100,99 +100,42 @@ ECONEXO/
 
 ---
 
-## ☁️ Despliegue del Backend de Puppeteer en la Nube (Render / Docker)
+## 💻 Aplicación de Escritorio Nativa (macOS y Windows) con Electron
 
-Como **GitHub Pages solo aloja archivos estáticos** (HTML, CSS y JS), las funciones de scraping en tiempo real de fondos de inversión (Puppeteer / Investing.com) requieren un backend Node.js en ejecución.
+ECONEXO incluye soporte para ejecutarse como una **aplicación de escritorio local completa** con ventana nativa, icono propio y Puppeteer integrado ejecutándose directamente en tu procesador.
 
-El repositorio incluye soporte de primera clase para desplegar el backend mediante **Docker** y **Render.com**.
-
----
-
-### 🐳 ¿Qué hace el `Dockerfile` y cómo está estructurado?
-
-El archivo [`Dockerfile`](file:///Users/inigo/Desktop/PROYECTOS/ECONEXO%202%20FINAL/Dockerfile) empaqueta el servidor Express y el scraper en una imagen de Linux ligera y reproducible.
-
-#### Anatomía paso a paso:
-1. **Imagen base (`node:20-slim`)**: Utiliza una distribución mínima de Debian con Node.js 20 oficial para mantener la imagen ligera.
-2. **Instalación de Chromium y dependencias nativas**:
-   - Puppeteer requiere Chromium y librerías gráficas/multimedia del sistema operativo (`libnss3`, `libatk-bridge`, `libgbm1`, fuentes tipográficas `fonts-liberation`, etc.) para renderizar páginas sin entorno de escritorio (*headless*).
-   - Se instalan a nivel de sistema (`apt-get`) y se limpian las listas de paquetes temporales para reducir el tamaño final de la imagen.
-3. **Variables de entorno (`ENV`)**:
-   - `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true`: Evita que `npm install` descargue un binario de Chrome redundante (~300 MB), ahorrando tiempo y almacenamiento.
-   - `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`: Le indica a Puppeteer la ruta exacta del Chromium del sistema operativo.
-   - `NODE_ENV=production` y `PORT=3000`: Optimiza Express y define el puerto de escucha.
-4. **Capa de dependencias en caché**: Se copian primero los archivos `package*.json` y se ejecuta `npm ci --omit=dev`. Esto permite que Docker reutilice la caché de dependencias si solo se edita el código fuente.
-5. **Copia del código y arranque**: Se copian los archivos del proyecto y se ejecuta `npm start` (`node server/server.js`), exponiendo el puerto `3000`.
+### ⚡ Ventajas de la App Local frente a la Web
+- **Velocidad máxima (2–3 segundos)**: Las cotizaciones se actualizan inmediatamente usando los núcleos reales de tu equipo en lugar de servidores compartidos en la nube.
+- **Cero arranques en frío (*Cold Starts*)**: No hay esperas de 40–50 segundos para que arranque ningún contenedor.
+- **Sin bloqueos de IP**: Tu conexión residencial no es bloqueada por Cloudflare ni sistemas anti-bot de Investing.com.
+- **Totalmente autónoma**: Al abrir la app, el backend se inicia y se apaga automáticamente de forma transparente.
 
 ---
 
-### 💻 Cómo usar el `Dockerfile` en local
+### 🚀 Comandos de la Aplicación de Escritorio
 
-Si tienes Docker instalado en tu ordenador (Docker Desktop o CLI), puedes construir y ejecutar el contenedor localmente:
-
-1. **Construir la imagen de Docker**:
+1. **Iniciar la aplicación en modo desarrollo / local**:
    ```bash
-   docker build -t econexo-backend .
+   npm run electron
    ```
+   Abre inmediatamente la ventana de ECONEXO con su backend local conectado.
 
-2. **Ejecutar el contenedor**:
+2. **Generar instalador para macOS (`.dmg`)**:
    ```bash
-   docker run -d --name econexo -p 3000:3000 --restart unless-stopped econexo-backend
+   npm run electron:build:mac
    ```
+   Genera el archivo instalable **`.dmg`** en la carpeta `dist-electron/` (compatible con Apple Silicon `arm64` e Intel `x64`), listo para arrastrar a `/Applications`.
 
-3. **Verificar que el backend está funcionando**:
-   Abre en tu navegador o ejecuta en la terminal:
+3. **Generar instalador para Windows (`.exe`)**:
    ```bash
-   curl http://localhost:3000/api/health
+   npm run electron:build:win
    ```
-   Respuesta esperada: `{"status":"ok","uptime":...,"version":"2.2.1"}`
+   Genera el instalador **`.exe` (NSIS)** en la carpeta `dist-electron/` con accesos directos al Escritorio y menú Inicio.
 
-4. **Ver registros (logs) del contenedor**:
+4. **Generar ambos instaladores**:
    ```bash
-   docker logs -f econexo
+   npm run electron:build
    ```
-
-5. **Detener el contenedor**:
-   ```bash
-   docker stop econexo && docker rm econexo
-   ```
-
----
-
-### 🚀 Despliegue gratuito en Render.com con `render.yaml`
-
-El repositorio incluye un archivo [`render.yaml`](file:///Users/inigo/Desktop/PROYECTOS/ECONEXO%202%20FINAL/render.yaml) que define la infraestructura como código (*Blueprint*).
-
-#### Pasos para desplegar en Render:
-1. Inicia sesión en **[Render.com](https://render.com)** con tu cuenta de GitHub.
-2. Haz clic en **New +** y selecciona **Blueprint** (o **Web Service**).
-3. Selecciona tu repositorio `ECONEXO`.
-4. Render detectará automáticamente el archivo `render.yaml` y el `Dockerfile`:
-   - **Entorno**: Docker
-   - **Plan**: Free (Gratuito)
-   - **Health Check**: `/api/health`
-5. Pulsa en **Apply** (o **Create Web Service**). En unos 2-3 minutos el servicio estará activo y Render te proporcionará una URL pública segura (ejemplo: `https://econexo-backend.onrender.com`).
-6. **Conectar con tu web de GitHub Pages**:
-   - Abre tu aplicación en GitHub Pages (`https://<tu-usuario>.github.io/ECONEXO/`).
-   - Haz clic en el **icono de estado de conexión** en la cabecera superior.
-   - Pega tu URL de Render (ej. `https://econexo-backend.onrender.com`) y pulsa **Guardar y Probar**.
-   - ¡Listo! Tu frontend estático en GitHub Pages ahora consultará cotizaciones en tiempo real mediante tu backend en Render.
-
----
-
-### ❓ ¿Por qué Render / Docker y no plataformas Serverless como Vercel?
-
-A menudo se plantea usar **Vercel** o **AWS Lambda** para el backend; sin embargo, para este tipo de aplicación presentan limitaciones técnicas importantes:
-
-| Característica | Render / Docker | Vercel (Serverless) |
-| :--- | :--- | :--- |
-| **Tiempo límite de ejecución** | Ilimitado (ideal para scraping de varios fondos) | **10 segundos** en plan gratuito (da error *504 Gateway Timeout*) |
-| **Tamaño del binario Chromium** | Sin límite (Chromium completo del sistema) | Máximo 50 MB (Chrome supera los 250 MB) |
-| **Procesos en segundo plano** | ✅ Soporta colas asíncronas (`jobId`) y scraping en segundo plano | ❌ La función se apaga inmediatamente tras la respuesta |
-| **Detección anti-bot (Stealth)** | ✅ Soporta `puppeteer-extra-plugin-stealth` completo | ⚠️ Muy propenso a bloqueos por IPs compartidas de AWS Lambda |
-
-> [!TIP]
-> Si deseas usar **Vercel**, la mejor estrategia es alojar allí el **frontend** (apuntando al directorio `public/`) por su alta velocidad de CDN, y mantener el **backend de Puppeteer en Render** mediante Docker.
 
 ---
 

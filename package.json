@@ -3,13 +3,111 @@
   "version": "2.2.1",
   "private": true,
   "type": "module",
+  "description": "Dashboard financiero integral con soporte para fondos de inversión, banca y ahorro",
+  "author": "ECONEXO",
   "scripts": {
     "start": "node server/server.js",
     "check": "node --check server/server.js && node --check server/services/investingScraper.js && node --check public/js/ahorro/ahorro.js && node --check public/js/app.js && node --check public/js/backup/backup.js && node --check public/js/backup/encryption.js && node --check public/js/backup/password-modal.js && node --check public/js/backup/export-csv.js && node --check public/js/backup/export-json.js && node --check public/js/backup/export-xlsx.js && node --check public/js/banca/banca.js && node --check public/js/charts/chart-core.js && node --check public/js/charts/chart-modes.js && node --check public/js/core/database.js && node --check public/js/core/events.js && node --check public/js/core/state.js && node --check public/js/core/storage.js && node --check public/js/core/utils.js && node --check public/js/fondos/fondos.js && node --check public/js/fondos/funds-analytics.js && node --check public/js/fondos/funds-charts.js && node --check public/js/fondos/funds-history.js && node --check public/js/fondos/funds-quotes.js && node --check public/js/fondos/funds-sync.js && node --check public/js/ui/date-range-picker.js && node --check public/js/ui/modal.js && node --check public/js/ui/api-settings.js && node --check public/js/ui/theme.js && node --check public/js/ui/toast.js",
-    "deploy": "gh-pages -d public"
+    "deploy": "gh-pages -d public",
+    "electron": "electron electron/main.cjs",
+    "electron:build:mac": "electron-builder --mac",
+    "electron:build:win": "electron-builder --win",
+    "electron:build": "electron-builder --mac --win"
   },
   "engines": {
     "node": ">=20"
+  },
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.econexo.app",
+    "productName": "ECONEXO",
+    "copyright": "Copyright © 2024 ECONEXO",
+    "directories": {
+      "buildResources": "electron/assets",
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "server/**/*",
+      "public/**/*",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/electron/**/*",
+      "!node_modules/electron-builder/**/*",
+      "!**/node_modules/puppeteer/.local-chromium/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/assets",
+        "to": "assets",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/puppeteer/**/*",
+      "node_modules/puppeteer-extra/**/*",
+      "node_modules/puppeteer-extra-plugin-stealth/**/*"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon-512.png",
+      "category": "public.app-category.finance",
+      "darkModeSupport": true,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": "electron/entitlements.mac.plist"
+    },
+    "dmg": {
+      "title": "ECONEXO ${version}",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ECONEXO"
+    }
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -19,6 +117,8 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "gh-pages": "^6.3.0"
   }
 }
