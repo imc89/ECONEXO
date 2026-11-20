@@ -2,9 +2,9 @@
 
 const { app, BrowserWindow, shell, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
-const { createServer } = require('http');
-const { fork } = require('child_process');
+const { pathToFileURL } = require('url');
 const net = require('net');
+const http = require('http');
 
 // ─── Mantener una sola instancia de la app ───────────────────────────────────
 const gotLock = app.requestSingleInstanceLock();
@@ -18,14 +18,13 @@ const isDev = !app.isPackaged;
 const PORT = 3399; // Puerto fijo para la app de escritorio
 
 let mainWindow = null;
-let serverProcess = null;
 let tray = null;
 
 // ─── Ruta del icono según plataforma ────────────────────────────────────────
 function getIconPath() {
   const assetsDir = isDev
     ? path.join(__dirname, 'assets')
-    : path.join(process.resourcesPath, 'assets');
+    : path.join(process.resourcesPath, 'app', 'electron', 'assets');
   if (process.platform === 'darwin') return path.join(assetsDir, 'icon-512.png');
   if (process.platform === 'win32') return path.join(assetsDir, 'icon.ico');
   return path.join(assetsDir, 'icon-256.png');
@@ -41,7 +40,7 @@ function isPortFree(port) {
   });
 }
 
-// ─── Lanzar el servidor Express + Puppeteer en un proceso separado ───────────
+// ─── Lanzar el servidor Express + Puppeteer directamente en el proceso ───────
 async function startBackendServer() {
   const free = await isPortFree(PORT);
   if (!free) {
@@ -49,48 +48,39 @@ async function startBackendServer() {
     return;
   }
 
-  // Usamos el bridge CJS que hace dynamic import() del server ESM
-  const serverScript = isDev
-    ? path.join(__dirname, 'server-bridge.cjs')
-    : path.join(process.resourcesPath, 'app', 'electron', 'server-bridge.cjs');
+  process.env.PORT = String(PORT);
+  process.env.NODE_ENV = 'production';
+  process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = 'false';
 
-  serverProcess = fork(serverScript, [], {
-    env: {
-      ...process.env,
-      PORT: String(PORT),
-      NODE_ENV: 'production',
-      // En la app empaquetada, apuntar al Chromium local de Puppeteer
-      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false',
-    },
-    stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
-    execArgv: [] // sin flags de Node que puedan interferir
-  });
+  const serverPath = path.join(__dirname, '..', 'server', 'server.js');
+  console.log('[Electron] Iniciando servidor Express desde:', serverPath);
 
-  serverProcess.stdout?.on('data', (d) => console.log('[Server]', d.toString().trim()));
-  serverProcess.stderr?.on('data', (d) => console.error('[Server ERR]', d.toString().trim()));
-
-  serverProcess.on('exit', (code) => {
-    console.log(`[Electron] Servidor salió con código ${code}`);
-    serverProcess = null;
-  });
+  try {
+    await import(pathToFileURL(serverPath).href);
+    console.log(`[Electron] Servidor Express iniciado con éxito en puerto ${PORT}`);
+  } catch (err) {
+    console.error('[Electron] Error crítico iniciando servidor Express:', err);
+  }
 }
 
 // ─── Esperar a que el servidor esté listo ────────────────────────────────────
-function waitForServer(url, maxWaitMs = 30000, intervalMs = 300) {
-  const http = require('http');
-  const https = require('https');
-  const lib = url.startsWith('https') ? https : http;
+function waitForServer(url, maxWaitMs = 15000, intervalMs = 150) {
   const start = Date.now();
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const check = () => {
-      lib.get(url, (res) => {
-        if (res.statusCode < 500) return resolve();
+      const req = http.get(url, (res) => {
+        if (res.statusCode < 500) return resolve(true);
         scheduleNext();
-      }).on('error', scheduleNext);
+      });
+      req.on('error', scheduleNext);
+      req.setTimeout(1000, () => { req.destroy(); scheduleNext(); });
     };
     const scheduleNext = () => {
-      if (Date.now() - start > maxWaitMs) return reject(new Error('Tiempo de espera del servidor agotado'));
+      if (Date.now() - start > maxWaitMs) {
+        console.warn('[Electron] waitForServer agotado, continuando...');
+        return resolve(false);
+      }
       setTimeout(check, intervalMs);
     };
     check();
@@ -107,17 +97,26 @@ function createMainWindow() {
     title: 'ECONEXO',
     icon: getIconPath(),
     backgroundColor: '#0f172a',
-    show: false, // se muestra cuando esté lista
+    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      // Permite que la app cargue HTTP en localhost sin bloqueos de CSP
     },
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
   });
 
-  // Abrir enlaces externos en el navegador del sistema, no dentro de la app
+  // Manejo de errores de carga con reintento automático
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error(`[Electron] Error al cargar ${validatedURL}: (${errorCode}) ${errorDescription}`);
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadURL(`http://127.0.0.1:${PORT}`);
+      }
+    }, 500);
+  });
+
+  // Abrir enlaces externos en el navegador del sistema
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
@@ -130,26 +129,18 @@ function createMainWindow() {
     }
   });
 
-  // Esperar a que el servidor esté listo antes de cargar la URL
-  waitForServer(`http://127.0.0.1:${PORT}/api/health`)
-    .then(() => {
-      mainWindow.loadURL(`http://127.0.0.1:${PORT}`);
-    })
-    .catch(() => {
-      // Fallback: cargar directamente aunque el health check falle
-      mainWindow.loadURL(`http://127.0.0.1:${PORT}`);
-    });
+  // Cargar URL del servidor local
+  mainWindow.loadURL(`http://127.0.0.1:${PORT}`);
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    if (isDev) mainWindow.webContents.openDevTools();
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 
-  // En macOS, cerrar la ventana no cierra la app (comportamiento estándar de macOS)
+  // En macOS, cerrar la ventana oculta la app pero la mantiene en el Dock
   mainWindow.on('close', (e) => {
     if (process.platform === 'darwin' && !app.isQuitting) {
       e.preventDefault();
@@ -218,13 +209,13 @@ app.whenReady().then(async () => {
 
   try {
     await startBackendServer();
+    await waitForServer(`http://127.0.0.1:${PORT}/api/health`, 10000, 150);
   } catch (err) {
     console.error('[Electron] Error al arrancar el backend:', err);
   }
 
   createMainWindow();
 
-  // Icono en la bandeja del sistema (opcional, especialmente útil en Windows)
   if (process.platform === 'win32') {
     const icon = nativeImage.createFromPath(getIconPath());
     tray = new Tray(icon);
@@ -236,7 +227,6 @@ app.whenReady().then(async () => {
   }
 });
 
-// Reabrir la ventana al hacer clic en el icono del Dock (macOS)
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createMainWindow();
@@ -246,23 +236,16 @@ app.on('activate', () => {
   }
 });
 
-// Cerrar el servidor cuando se cierre la app
 app.on('before-quit', () => {
   app.isQuitting = true;
-  if (serverProcess) {
-    serverProcess.kill('SIGTERM');
-    serverProcess = null;
-  }
 });
 
-// En Windows y Linux, salir cuando se cierren todas las ventanas
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-// Segunda instancia: enfocar la ventana existente
 app.on('second-instance', () => {
   if (mainWindow) {
     if (mainWindow.isMinimized()) mainWindow.restore();
