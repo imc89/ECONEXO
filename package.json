@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node server/server.js",
-    "check": "node --check server/server.js && node --check server/services/investingScraper.js && node --check public/js/ahorro/ahorro.js && node --check public/js/app.js && node --check public/js/backup/backup.js && node --check public/js/backup/encryption.js && node --check public/js/backup/password-modal.js && node --check public/js/backup/export-csv.js && node --check public/js/backup/export-json.js && node --check public/js/backup/export-xlsx.js && node --check public/js/banca/banca.js && node --check public/js/charts/chart-core.js && node --check public/js/charts/chart-modes.js && node --check public/js/core/database.js && node --check public/js/core/events.js && node --check public/js/core/state.js && node --check public/js/core/storage.js && node --check public/js/core/utils.js && node --check public/js/fondos/fondos.js && node --check public/js/fondos/funds-analytics.js && node --check public/js/fondos/funds-charts.js && node --check public/js/fondos/funds-history.js && node --check public/js/fondos/funds-quotes.js && node --check public/js/fondos/funds-sync.js && node --check public/js/ui/date-range-picker.js && node --check public/js/ui/modal.js && node --check public/js/ui/theme.js && node --check public/js/ui/toast.js"
+    "check": "node --check server/server.js && node --check server/services/investingScraper.js && node --check public/js/ahorro/ahorro.js && node --check public/js/app.js && node --check public/js/backup/backup.js && node --check public/js/backup/encryption.js && node --check public/js/backup/password-modal.js && node --check public/js/backup/export-csv.js && node --check public/js/backup/export-json.js && node --check public/js/backup/export-xlsx.js && node --check public/js/banca/banca.js && node --check public/js/charts/chart-core.js && node --check public/js/charts/chart-modes.js && node --check public/js/core/database.js && node --check public/js/core/events.js && node --check public/js/core/state.js && node --check public/js/core/storage.js && node --check public/js/core/utils.js && node --check public/js/fondos/fondos.js && node --check public/js/fondos/funds-analytics.js && node --check public/js/fondos/funds-charts.js && node --check public/js/fondos/funds-history.js && node --check public/js/fondos/funds-quotes.js && node --check public/js/fondos/funds-sync.js && node --check public/js/ui/date-range-picker.js && node --check public/js/ui/modal.js && node --check public/js/ui/theme.js && node --check public/js/ui/toast.js",
+    "deploy": "gh-pages -d public"
   },
   "engines": {
     "node": ">=20"
@@ -16,5 +17,8 @@
     "puppeteer": "^24.10.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }
