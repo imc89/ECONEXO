@@ -65,7 +65,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: dist-electron/*.exe
+          path: |
+            dist-electron/*.exe
+            dist-electron/Desinstalador-ECONEXO-windows.zip
           if-no-files-found: error
 
   publish-release:
@@ -107,6 +109,7 @@ jobs:
 
             #### 🪟 Para Windows:
             - **`ECONEXO Setup 1.0.0.exe`**: Instalador oficial para **Windows 10 / 11 (64-bit)** con accesos directos y desinstalador automático integrado.
+            - **`Desinstalador-ECONEXO-windows.zip`**: Script complementario para desinstalar ECONEXO y borrar todos sus datos locales en Windows en 1 clic.
 
             ---
 

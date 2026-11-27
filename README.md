@@ -133,6 +133,12 @@ ECONEXO incluye soporte para ejecutarse como una **aplicación de escritorio loc
    npm run electron:build
    ```
 
+5. **Generar desinstaladores completos (macOS y Windows)**:
+   ```bash
+   npm run uninstaller
+   ```
+   Crea la app nativa `Desinstalador ECONEXO.app` para macOS y el script interactivo de 1 clic `Desinstalador ECONEXO` para Windows, que eliminan por completo la app y todas sus bases de datos locales (`ECONEXO`).
+
 ---
 
 ## 📱 Acceso Directo / App Móvil (PWA)
