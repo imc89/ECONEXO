@@ -88,14 +88,10 @@ ECONEXO/
 > [!TIP]
 > Puedes verificar el estado del servidor y la versión activa en cualquier momento accediendo a `http://localhost:3000/api/health`.
 
-### Verificación de sintaxis y despliegue
+### Verificación de sintaxis
 - Verificar la integridad de todos los módulos sin iniciar el servidor:
   ```bash
   npm run check
-  ```
-- Publicar / desplegar la versión estática en GitHub Pages:
-  ```bash
-  npm run deploy
   ```
 
 ---
