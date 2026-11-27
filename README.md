@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/img/logo.png" alt="Logo ECONEXO" width="100" height="100" />
+</p>
+
 # ECONEXO 📊
 
 > **Dashboard financiero integral y privado**: gestión de cuentas bancarias dinámicas, fondos indexados con seguimiento y cotizaciones automáticas, cálculo de ahorro y copias de seguridad cifradas.
