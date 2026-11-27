@@ -13,6 +13,8 @@ jobs:
   build-mac:
     name: Compilar para macOS (.dmg)
     runs-on: macos-14
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
@@ -41,6 +43,8 @@ jobs:
   build-windows:
     name: Compilar para Windows (.exe)
     runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Descargar código
         uses: actions/checkout@v4

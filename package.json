@@ -11,9 +11,9 @@
     "deploy": "gh-pages -d public",
     "electron": "electron electron/main.cjs",
     "uninstaller": "./scripts/create-uninstaller-app.sh",
-    "electron:build:mac": "electron-builder --mac && ./scripts/create-uninstaller-app.sh",
-    "electron:build:win": "electron-builder --win",
-    "electron:build": "electron-builder --mac --win && ./scripts/create-uninstaller-app.sh"
+    "electron:build:mac": "electron-builder --mac -c.publish=never && ./scripts/create-uninstaller-app.sh",
+    "electron:build:win": "electron-builder --win -c.publish=never",
+    "electron:build": "electron-builder --mac --win -c.publish=never && ./scripts/create-uninstaller-app.sh"
   },
   "engines": {
     "node": ">=20"
@@ -23,6 +23,7 @@
     "appId": "com.econexo.app",
     "productName": "ECONEXO",
     "copyright": "Copyright © 2024 ECONEXO",
+    "publish": "never",
     "directories": {
       "buildResources": "electron/assets",
       "output": "dist-electron"
