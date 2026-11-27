@@ -2,6 +2,7 @@
 
 const { app, BrowserWindow, shell, Menu, Tray, nativeImage } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { pathToFileURL } = require('url');
 const net = require('net');
 const http = require('http');
@@ -31,12 +32,23 @@ let tray = null;
 
 // ─── Ruta del icono según plataforma ────────────────────────────────────────
 function getIconPath() {
-  const assetsDir = isDev
-    ? path.join(__dirname, 'assets')
-    : path.join(process.resourcesPath, 'app', 'electron', 'assets');
-  if (process.platform === 'darwin') return path.join(assetsDir, 'icon-512.png');
-  if (process.platform === 'win32') return path.join(assetsDir, 'icon.ico');
-  return path.join(assetsDir, 'icon-256.png');
+  const possibleDirs = isDev
+    ? [path.join(__dirname, 'assets')]
+    : [
+        path.join(process.resourcesPath, 'assets'),
+        path.join(process.resourcesPath, 'app', 'electron', 'assets'),
+        path.join(__dirname, 'assets')
+      ];
+  const fileName = process.platform === 'darwin'
+    ? 'icon-512.png'
+    : process.platform === 'win32'
+    ? 'icon.ico'
+    : 'icon-256.png';
+  for (const dir of possibleDirs) {
+    const candidate = path.join(dir, fileName);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return undefined;
 }
 
 // ─── Comprobar si el puerto ya está en uso ───────────────────────────────────
@@ -145,6 +157,13 @@ function createMainWindow() {
     mainWindow.show();
   });
 
+  // Fallback de seguridad en caso de que ready-to-show tarde o no se dispare
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+  }, 1500);
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -226,13 +245,22 @@ app.whenReady().then(async () => {
   createMainWindow();
 
   if (process.platform === 'win32') {
-    const icon = nativeImage.createFromPath(getIconPath());
-    tray = new Tray(icon);
-    tray.setToolTip('ECONEXO - Dashboard Financiero');
-    tray.on('double-click', () => {
-      if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
-      else createMainWindow();
-    });
+    try {
+      const iconPath = getIconPath();
+      if (iconPath) {
+        const icon = nativeImage.createFromPath(iconPath);
+        if (!icon.isEmpty()) {
+          tray = new Tray(icon);
+          tray.setToolTip('ECONEXO - Dashboard Financiero');
+          tray.on('double-click', () => {
+            if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
+            else createMainWindow();
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[Electron] No se pudo inicializar el icono de bandeja:', e);
+    }
   }
 });
 

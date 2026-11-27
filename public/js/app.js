@@ -543,11 +543,11 @@
       document.getElementById('btnAddNewYearMatrix')?.addEventListener('click', addNewYearMatrix);
 
       // Comprobación inicial: el splash se mantiene visible hasta decidir si hace falta actualizar.
-      // El splash siempre se muestra. Primero comprobamos una muestra de los dos
-      // primeros fondos. Solo si detectamos diferencias (o no podemos verificarla)
-      // se ejecuta la actualización completa del monitor.
+      // Límite de seguridad: nunca bloquear la interfaz más de 3.5s si el servidor o scraping tardan.
+      const splashSafetyTimer = setTimeout(hideStartupSplash, 3500);
       const startupCheck = await checkStartupFundsUnchanged();
       if (startupCheck.unchanged) {
+        clearTimeout(splashSafetyTimer);
         setStartupSplashProgress(liveQuotes.length, liveQuotes.length, '✓ Datos guardados recientes', false, {
           activity: 'Sin consultas de red redundantes; fechas originales conservadas',
           active: 0
@@ -559,6 +559,7 @@
         setTimeout(hideStartupSplash, 350);
       } else {
         await refreshFundsOnStartup();
+        clearTimeout(splashSafetyTimer);
       }
 
       // La actualización histórica se hace en segundo plano, sin bloquear la app.

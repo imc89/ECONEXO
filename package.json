@@ -64,10 +64,9 @@
       "icon": "electron/assets/icon.icns",
       "category": "public.app-category.finance",
       "darkModeSupport": true,
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "entitlements": "electron/entitlements.mac.plist",
-      "entitlementsInherit": "electron/entitlements.mac.plist"
+      "identity": null
     },
     "dmg": {
       "title": "ECONEXO ${version}",

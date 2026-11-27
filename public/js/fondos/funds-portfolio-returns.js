@@ -4,83 +4,22 @@
 'use strict';
 
 /**
- * Referencia de posiciones actuales de la cartera de fondos indexados.
- * Se utiliza como origen de datos inicial o fallback de referencia comercial
- * cuando no se han registrado aún valores en el histórico mensual.
+ * Estructura base vacía para la cartera cuando aún no hay registros introducidos.
+ * Por seguridad y privacidad, no se precargan datos reales ni de demostración.
  */
 const PORTFOLIO_REFERENCE_DATA = Object.freeze({
-  valorMercadoTotal: 20353.22,
-  capitalInvertidoTotal: 19528.80,
-  beneficioTotal: 824.42,
-  rentabilidadTotal: (824.42 / 19528.80) * 100, // 4.221559952480439 %
-  fondos: Object.freeze([
-    Object.freeze({
-      isin: 'IE00BYX5MX67',
-      name: 'Fidelity S&P 500 Index Fund EUR P Acc',
-      shortName: 'Fidelity S&P 500',
-      valorMercado: 10121.06,
-      beneficioPerdida: 1156.64,
-      capitalInvertido: 8964.42, // 10121.06 - 1156.64
-      rentabilidad: (1156.64 / 8964.42) * 100 // 12.902563... -> 12.90 %
-    }),
-    Object.freeze({
-      isin: 'IE0031786696',
-      name: 'Vanguard Emerging Markets Stock Index Fund EUR Acc',
-      shortName: 'Vanguard Emerging Markets',
-      valorMercado: 3073.07,
-      beneficioPerdida: 86.39,
-      capitalInvertido: 2986.68, // 3073.07 - 86.39
-      rentabilidad: (86.39 / 2986.68) * 100 // 2.892509... -> 2.89 %
-    }),
-    Object.freeze({
-      isin: 'IE0007281425',
-      name: 'Vanguard Japan Stock Index Inv EUR Acc',
-      shortName: 'Vanguard Japan',
-      valorMercado: 2727.77,
-      beneficioPerdida: 183.19,
-      capitalInvertido: 2544.58, // 2727.77 - 183.19
-      rentabilidad: (183.19 / 2544.58) * 100 // 7.199223... -> 7.20 %
-    }),
-    Object.freeze({
-      isin: 'IE00B4468526',
-      name: 'Polar Global Technology R EUR',
-      shortName: 'Polar Global Technology',
-      valorMercado: 2269.06,
-      beneficioPerdida: -641.18,
-      capitalInvertido: 2910.24, // 2269.06 - (-641.18)
-      rentabilidad: (-641.18 / 2910.24) * 100 // -22.03186... -> -22.03 %
-    }),
-    Object.freeze({
-      isin: 'IE0007987690',
-      name: 'Vanguard European Stock Index Fund Investor EUR Accumulation',
-      shortName: 'Vanguard European Stock',
-      valorMercado: 2162.26,
-      beneficioPerdida: 39.38,
-      capitalInvertido: 2122.88, // 2162.26 - 39.38
-      rentabilidad: (39.38 / 2122.88) * 100 // 1.855027... -> 1.86 %
-    })
-  ])
+  valorMercadoTotal: 0,
+  capitalInvertidoTotal: 0,
+  beneficioTotal: 0,
+  rentabilidadTotal: 0,
+  fondos: Object.freeze([])
 });
 
 /**
  * Busca datos de referencia para un fondo a partir de su ISIN, nombre o clave.
  */
 function findPortfolioReferenceFund(key, isin, name) {
-  const norm = str => String(str || '').trim().toUpperCase();
-  const targetKey = norm(key);
-  const targetIsin = norm(isin);
-  const targetName = norm(name);
-
-  return PORTFOLIO_REFERENCE_DATA.fondos.find(ref => {
-    const refIsin = norm(ref.isin);
-    const refName = norm(ref.name);
-    const refShort = norm(ref.shortName);
-
-    if (targetIsin && targetIsin === refIsin) return true;
-    if (targetKey && (targetKey === refIsin || targetKey === refShort || targetKey.includes(refShort))) return true;
-    if (targetName && (targetName === refShort || targetName.includes(refShort) || refName.includes(targetName))) return true;
-    return false;
-  }) || null;
+  return null;
 }
 
 /**
@@ -170,23 +109,15 @@ function computePortfolioReturns() {
     }).filter(f => f.valorMercado > 0);
   }
 
-  // ── Caso B: No hay registros mensuales con desglose; usar posiciones de referencia ──
+  // ── Caso B: No hay registros mensuales con desglose; cartera vacía ──
   if (!computedFunds.length) {
-    computedFunds = PORTFOLIO_REFERENCE_DATA.fondos.map(ref => {
-      const liveQuote = (typeof liveQuotes !== 'undefined' && Array.isArray(liveQuotes))
-        ? liveQuotes.find(q => q.isin === ref.isin || q.fundName === ref.name)
-        : null;
-      return {
-        key: ref.isin,
-        name: ref.name,
-        shortName: ref.shortName,
-        isin: liveQuote?.isin || ref.isin,
-        valorMercado: ref.valorMercado,
-        capitalInvertido: ref.capitalInvertido,
-        beneficioPerdida: ref.beneficioPerdida,
-        rentabilidad: ref.rentabilidad
-      };
-    });
+    return {
+      valorMercadoTotal: 0,
+      capitalInvertidoTotal: 0,
+      beneficioTotal: 0,
+      rentabilidadTotal: null,
+      fondos: []
+    };
   }
 
   // ── Totales de cartera ───────────────────────────────────────────────────
@@ -195,7 +126,7 @@ function computePortfolioReturns() {
   const allHaveInvested = computedFunds.every(f => f.capitalInvertido !== null);
   const capitalInvertidoTotal = allHaveInvested
     ? computedFunds.reduce((sum, f) => sum + f.capitalInvertido, 0)
-    : PORTFOLIO_REFERENCE_DATA.capitalInvertidoTotal;
+    : 0;
 
   const beneficioTotal = valorMercadoTotal - capitalInvertidoTotal;
 
