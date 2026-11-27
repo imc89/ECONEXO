@@ -67,6 +67,7 @@ jobs:
   publish-release:
     name: Crear Release en GitHub
     needs: [build-mac, build-windows]
+    if: always() && (needs.build-mac.result == 'success' || needs.build-windows.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Descargar código

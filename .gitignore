@@ -164,7 +164,3 @@ vite.config.ts.timestamp-*
 
 # Electron build output
 dist-electron/
-
-# Electron assets generados (iconos se regeneran con sips)
-electron/assets/icon-*.png
-electron/assets/icon.ico
