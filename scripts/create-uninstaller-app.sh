@@ -95,6 +95,7 @@ osascript -e 'display alert "✅ Desinstalación Completada" message "La aplicac
 EOF
 
 chmod +x "$TARGET_DIR/Contents/MacOS/uninstaller"
+codesign --force --deep --sign - "$TARGET_DIR" 2>/dev/null || true
 
 echo "✅ App de desinstalación creada con éxito en:"
 echo "   $TARGET_DIR"

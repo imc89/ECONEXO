@@ -22,6 +22,7 @@
     "appId": "com.econexo.app",
     "productName": "ECONEXO",
     "copyright": "Copyright © 2024 ECONEXO",
+    "afterPack": "./scripts/after-pack.cjs",
     "directories": {
       "buildResources": "electron/assets",
       "output": "dist-electron"
