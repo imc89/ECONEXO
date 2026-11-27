@@ -165,5 +165,5 @@ ECONEXO está preparado para instalarse como una aplicación nativa o acceso dir
 
 ## 📝 Versión Actual
 
-- **Versión actual**: `2.2.1`
-- **Build**: `2.2.0` / `2.2.1`
+- **Versión actual**: `1.0.0`
+- **Build**: `1.0.0`

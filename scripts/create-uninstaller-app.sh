@@ -37,7 +37,7 @@ cat << 'EOF' > "$TARGET_DIR/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.2.1</string>
+    <string>1.0.0</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.13</string>
 </dict>
@@ -98,3 +98,8 @@ chmod +x "$TARGET_DIR/Contents/MacOS/uninstaller"
 
 echo "✅ App de desinstalación creada con éxito en:"
 echo "   $TARGET_DIR"
+
+cd "$ROOT_DIR/dist-electron"
+zip -r -q "Desinstalador-ECONEXO-mac.zip" "$APP_NAME"
+echo "📦 Comprimido para distribución en:"
+echo "   $ROOT_DIR/dist-electron/Desinstalador-ECONEXO-mac.zip"
